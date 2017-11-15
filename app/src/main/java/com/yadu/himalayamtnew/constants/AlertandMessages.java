@@ -8,9 +8,6 @@ import android.content.Intent;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.widget.Toast;
-
-import com.cpm.gskgtmerchandiser.R;
-import com.cpm.gskgtmerchandiser.dailyentry.POSMSubMenuActivity;
 import com.yadu.himalayamtnew.R;
 
 /**
