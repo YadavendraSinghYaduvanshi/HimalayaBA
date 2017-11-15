@@ -395,10 +395,10 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
 
                     finish();
                 } else {
-                    Intent intent = new Intent(getBaseContext(), AutoUp.class);
-                    intent.putExtra(CommonString.KEY_PATH, preferences.getString(CommonString.KEY_PATH, ""));
-                    startActivity(intent);
-                    finish();
+                   // Intent intent = new Intent(getBaseContext(), AutoUp.class);
+                  //  intent.putExtra(CommonString.KEY_PATH, preferences.getString(CommonString.KEY_PATH, ""));
+                  //  startActivity(intent);
+                  //  finish();
                 }
             }
 

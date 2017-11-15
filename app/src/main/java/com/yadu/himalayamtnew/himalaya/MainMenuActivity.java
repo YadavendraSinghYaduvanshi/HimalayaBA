@@ -22,6 +22,7 @@ import android.view.MenuItem;
 
 import com.yadu.himalayamtnew.R;
 import com.yadu.himalayamtnew.constants.CommonString;
+import com.yadu.himalayamtnew.dailyentry.StoreListActivity;
 import com.yadu.himalayamtnew.database.HimalayaDb;
 
 import java.io.File;
@@ -104,11 +105,12 @@ public class MainMenuActivity extends AppCompatActivity
 
         if (id == R.id.nav_route_plan) {
             // Handle the camera action
-            Intent startDownload = new Intent(this, DailyEntryScreen.class);
+            Intent startDownload = new Intent(this, StoreListActivity.class);
             startActivity(startDownload);
             overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
 
-        } else if (id == R.id.nav_download) {
+        }
+/*        else if (id == R.id.nav_download) {
 
             AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
             builder1.setTitle("Parinaam");
@@ -167,10 +169,10 @@ public class MainMenuActivity extends AppCompatActivity
 
                             if (checkNetIsAvailable()) {
                                 jcplist = database.getJCPData(date);
-                               /* if (jcplist.size() == 0) {
+                               *//* if (jcplist.size() == 0) {
                                     Snackbar.make(frameLayout, "Please Download Data First", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
                                     //  Toast.makeText(getBaseContext(), "Please Download Data First", Toast.LENGTH_LONG).show();
-                                }*/
+                                }*//*
                                 //it works even there is no jcp
                                 if (database.isSkuMasterDownloaded()) {
 
@@ -204,9 +206,9 @@ public class MainMenuActivity extends AppCompatActivity
                                             }
                                         }
                                     }
-                    /*intent = new Intent(getBaseContext(),UploadOptionActivity.class);
+                    *//*intent = new Intent(getBaseContext(),UploadOptionActivity.class);
                     startActivity(intent);
-					MainMenuActivity.this.finish();*/
+					MainMenuActivity.this.finish();*//*
 
                                 }else {
 
@@ -313,7 +315,7 @@ public class MainMenuActivity extends AppCompatActivity
             AlertDialog alert1 = builder1.create();
             alert1.show();
 
-        } /*else if (id == R.id.nav_payslip) {
+        } *//*else if (id == R.id.nav_payslip) {
             jcplist = database.getJCPData(date);
 
             if (jcplist.size() == 0) {

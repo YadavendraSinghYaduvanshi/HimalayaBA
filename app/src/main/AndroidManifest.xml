@@ -27,7 +27,8 @@
             android:name=".himalaya.MainMenuActivity"
             android:label="@string/title_activity_main_menu"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".autoupdate.AutoUpdateActivity"></activity>
+        <activity android:name=".autoupdate.AutoUpdateActivity" />
+        <activity android:name=".dailyentry.StoreListActivity"></activity>
     </application>
 
 </manifest>
