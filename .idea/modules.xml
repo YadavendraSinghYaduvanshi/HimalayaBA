@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/HimalayaMTLatest.iml" filepath="$PROJECT_DIR$/HimalayaMTLatest.iml" />
       <module fileurl="file://$PROJECT_DIR$/HimalayaMTNew.iml" filepath="$PROJECT_DIR$/HimalayaMTNew.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
