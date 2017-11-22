@@ -57,7 +57,21 @@ public class CommonString {
     public static final String KEY_STORE_CD = "STORE_CD";
     public static final String KEY_STORE_IN_TIME = "Store_in_time";
     public static final String DATA_DELETE_ALERT_MESSAGE = "Saved data will be lost - Do you want to continue?";
+    //region ysy
+    public static final String KEY_STATUS = "STATUS";
+    public static final String KEY_NEW_UPDATE = "New Update Available";
 
+    public static final String METHOD_NAME_UNIVERSAL_DOWNLOAD = "Download_Universal";
+    public static final String SOAP_ACTION_UNIVERSAL = "http://tempuri.org/"
+            + METHOD_NAME_UNIVERSAL_DOWNLOAD;
+
+    public static final String URL_Notice_Board = "http://himalaya.parinaam.in/notice/notice.html";
+
+    public static final String MESSAGE_DOWNLOAD = "Data Downloaded Successfully";
+    public static final String MESSAGE_UPLOAD_DATA = "Data Uploaded Successfully";
+    public static final String MESSAGE_UPLOAD_IMAGE = "Images Uploaded Successfully";
+    public static final String MESSAGE_JCP_FALSE = "Data is not found in ";
+    //endregion
     public static final String CREATE_TABLE_COVERAGE_DATA = "CREATE TABLE  IF NOT EXISTS "
             + TABLE_COVERAGE_DATA + " ("
             + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
