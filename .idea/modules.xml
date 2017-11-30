@@ -4,7 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/HimalayaMTLatest.iml" filepath="$PROJECT_DIR$/HimalayaMTLatest.iml" />
       <module fileurl="file://$PROJECT_DIR$/HimalayaMTNew.iml" filepath="$PROJECT_DIR$/HimalayaMTNew.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/himalayamt/himalayamt.iml" filepath="$PROJECT_DIR$/himalayamt/himalayamt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
     </modules>
   </component>
 </project>
