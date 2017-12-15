@@ -164,9 +164,7 @@ public class DownloadActivity extends AppCompatActivity {
                     xpp.setInput(new StringReader(result.toString()));
                     xpp.next();
                     eventType = xpp.getEventType();
-
                     skumastergettersetter = XMLHandlers.storeListXML(xpp, eventType);
-
                     if (skumastergettersetter.getSku_cd().size() > 0) {
                         String skutable = skumastergettersetter.getSku_master_table();
                         if (skutable != null) {
@@ -359,7 +357,6 @@ public class DownloadActivity extends AppCompatActivity {
                 request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
                 request.addProperty("UserName", _UserId);
                 request.addProperty("Type", "MAPPING_ASSET_NEW");
-
                 envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                 envelope.dotNet = true;
                 envelope.setOutputSoapObject(request);
@@ -773,11 +770,14 @@ public class DownloadActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             dialog.dismiss();
-            if (result.equals(CommonString.KEY_SUCCESS)) {
-                AlertandMessages.showAlert(DownloadActivity.this, CommonString.MESSAGE_DOWNLOAD, true);
-            } else {
-                AlertandMessages.showAlert(DownloadActivity.this, result, true);
+            if (success_flag){
+                if (result.equals(CommonString.KEY_SUCCESS)) {
+                    AlertandMessages.showAlert(DownloadActivity.this, CommonString.MESSAGE_DOWNLOAD, true);
+                } else {
+                    AlertandMessages.showAlert(DownloadActivity.this, result, true);
+                }
             }
+
         }
 
     }

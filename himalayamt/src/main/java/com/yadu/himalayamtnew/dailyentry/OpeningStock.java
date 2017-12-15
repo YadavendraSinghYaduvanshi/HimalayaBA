@@ -1,19 +1,16 @@
 package com.yadu.himalayamtnew.dailyentry;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
@@ -37,7 +34,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.afollestad.materialcamera.MaterialCamera;
 import com.yadu.himalayamtnew.R;
 import com.yadu.himalayamtnew.constants.CommonString;
 import com.yadu.himalayamtnew.database.HimalayaDb;
@@ -102,12 +98,6 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
     ImageView img_camOpeningStock;
     boolean isDialogOpen = true;
     boolean cam_flag = true;
-
-    //jeevan
-    File saveDir = null;
-    private final static int CAMERA_RQ = 6969;
-    private SharedPreferences.Editor editor = null;
-    int child_position=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,11 +173,6 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
                 return false;
             }
         });
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            saveDir = new File(CommonString.FILE_PATH);
-            saveDir.mkdirs();
-        }
     }
 
     //Preparing the list data
@@ -201,7 +186,6 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
         if (brandData.size() > 0) {
             for (int i = 0; i < brandData.size(); i++) {
                 listDataHeader.add(brandData.get(i));
-
                 skuData = db.getOpeningStockDataFromDatabase(store_cd, brandData.get(i).getCategory_cd());
                 if (!(skuData.size() > 0)) {
                     skuData = db.getStockSkuData(store_cd, brandData.get(i).getCategory_cd());
@@ -220,11 +204,9 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         int id = v.getId();
-
         if (id == R.id.save_btn) {
             expListView.clearFocus();
             expListView.invalidateViews();
-
             if (snackbar == null || !snackbar.isShown()) {
                 if (validateData(listDataChild, listDataHeader)) {
 
@@ -500,8 +482,7 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public int getChildrenCount(int groupPosition) {
-            return _listDataChild.get(this._listDataHeader.get(groupPosition))
-                    .size();
+            return _listDataChild.get(this._listDataHeader.get(groupPosition)).size();
         }
 
         @Override
@@ -565,80 +546,36 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
             imgcamhim.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MaterialCamera materialCamera = new MaterialCamera((Activity) _context)
-                            .saveDir(saveDir)
-                            .showPortraitWarning(true)
-                            .allowRetry(true)
-                            .defaultToFrontFacing(false)
-                            .allowRetry(true)
-                            .autoSubmit(false)
-                            .labelConfirm(R.string.mcam_use_video);
                     grp_position = groupPosition;
-                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "HimalayaSTKImg"
-                            + visit_date.replace("/", "") + getCurrentTime().replace(":", "") + ".jpg";
+                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "_HimalayaSTKImg_"
+                            + visit_date.replace("/", "") + "_" + getCurrentTime().replace(":", "") + ".jpg";
+                    _path = CommonString.FILE_PATH + _pathforcheck;
 
-
-                    editor = preferences.edit();
-                    editor.putString("imagename", _pathforcheck);
-                    editor.commit();
-                    materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                    materialCamera.start(CAMERA_RQ);
-                    child_position = R.id.img_cam_himalaya;
-                   /* _path = CommonString.FILE_PATH + _pathforcheck;
-                    startCameraActivity(0);*/
+                    startCameraActivity(0);
                 }
             });
-
 
             imgcamcat1.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MaterialCamera materialCamera = new MaterialCamera((Activity) _context)
-                            .saveDir(saveDir)
-                            .showPortraitWarning(true)
-                            .allowRetry(true)
-                            .defaultToFrontFacing(false)
-                            .allowRetry(true)
-                            .autoSubmit(false)
-                            .labelConfirm(R.string.mcam_use_video);
                     grp_position = groupPosition;
-                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "CatSTKImgOne"
-                            + visit_date.replace("/", "") + getCurrentTime().replace(":", "") + ".jpg";
+                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "_CatSTKImgOne_"
+                            + visit_date.replace("/", "") + "_" + getCurrentTime().replace(":", "") + ".jpg";
+                    _path = CommonString.FILE_PATH + _pathforcheck;
 
-                    editor = preferences.edit();
-                    editor.putString("imagename", _pathforcheck);
-                    editor.commit();
-                    materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                    materialCamera.start(CAMERA_RQ);
-                    child_position = R.id.img_cam_cat1;
-                   /* _path = CommonString.FILE_PATH + _pathforcheck;
-                    startCameraActivity(1);*/
+                    startCameraActivity(1);
                 }
             });
 
             imgcamcat2.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MaterialCamera materialCamera = new MaterialCamera((Activity) _context)
-                            .saveDir(saveDir)
-                            .showPortraitWarning(true)
-                            .allowRetry(true)
-                            .defaultToFrontFacing(false)
-                            .allowRetry(true)
-                            .autoSubmit(false)
-                            .labelConfirm(R.string.mcam_use_video);
                     grp_position = groupPosition;
-                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "CatSTKImgTwo"
-                            + visit_date.replace("/", "") + getCurrentTime().replace(":", "") + ".jpg";
+                    _pathforcheck = store_cd + "_" + headerTitle.getCategory_cd() + "_CatSTKImgTwo_"
+                            + visit_date.replace("/", "") + "_" + getCurrentTime().replace(":", "") + ".jpg";
+                    _path = CommonString.FILE_PATH + _pathforcheck;
 
-                    editor = preferences.edit();
-                    editor.putString("imagename", _pathforcheck);
-                    editor.commit();
-                    materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                    materialCamera.start(CAMERA_RQ);
-                    child_position = R.id.img_cam_cat2;
-                    /*_path = CommonString.FILE_PATH + _pathforcheck;
-                    startCameraActivity(1);*/
+                    startCameraActivity(1);
                 }
             });
 
@@ -857,10 +794,11 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
             Log.i("MakeMachine", "startCameraActivity()");
             File file = new File(_path);
             Uri outputFileUri = Uri.fromFile(file);
+
             Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-            startActivityForResult(intent, position);
 
+            startActivityForResult(intent, position);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -869,39 +807,8 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.i("MakeMachine", "resultCode: " + resultCode);
-        switch (resultCode) {
+        switch (requestCode) {
             case 0:
-                Log.i("MakeMachine", "User cancelled");
-                break;
-            case -1:
-                if (requestCode == CAMERA_RQ) {
-                    if (resultCode == RESULT_OK) {
-                        switch (child_position) {
-                            case R.id.img_cam_himalaya:
-                                File file = new File(data.getData().getPath());
-                                _pathforcheck = file.getName();
-                                image1 = _pathforcheck;
-                                img1 = _pathforcheck;
-                                break;
-                            case R.id.img_cam_cat1:
-                                File file1 = new File(data.getData().getPath());
-                                _pathforcheck = file1.getName();
-                                img2 = _pathforcheck;
-                              //  expListView.invalidateViews();
-                                break;
-                            case R.id.img_cam_cat2:
-                                File file2 = new File(data.getData().getPath());
-                                _pathforcheck = file2.getName();
-                                img3 = _pathforcheck;
-                               // expListView.invalidateViews();
-                                break;
-                        }
-                        expListView.invalidateViews();
-                        _pathforcheck = "";
-                    }
-                }
-                break;
-/*
                 if (resultCode == -1) {
                     if (_pathforcheck != null && !_pathforcheck.equals("")) {
                         if (new File(str + _pathforcheck).exists()) {
@@ -935,7 +842,7 @@ public class OpeningStock extends AppCompatActivity implements View.OnClickListe
                     Log.i("MakeMachine", "User cancelled");
                     _pathforcheck = "";
                 }
-                break;*/
+                break;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }

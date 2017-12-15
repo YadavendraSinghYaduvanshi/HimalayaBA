@@ -24,7 +24,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.afollestad.materialcamera.MaterialCamera;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -36,7 +35,6 @@ import com.yadu.himalayamtnew.delegates.CoverageBean;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 
 public class StoreImageActivity extends AppCompatActivity implements
@@ -45,16 +43,14 @@ public class StoreImageActivity extends AppCompatActivity implements
 
     ImageView img_cam, img_clicked;
     Button btn_save;
-    String _pathforcheck, _path, str;
-    String store_cd, visit_date, username, intime, date;
+    String _pathforcheck, str;
+    String store_cd, visit_date, username, intime, _path;
     private SharedPreferences preferences;
     AlertDialog alert;
     String img_str;
     private HimalayaDb database;
-    // private LocationManager locationManager;
-    String lat, lon;
+    String lat = "0.0", lon = "0.0";
     GoogleApiClient mGoogleApiClient;
-    ArrayList<CoverageBean> coverage_list;
     Intent intent;
     boolean flag_deviation;
     //jeevan
@@ -74,25 +70,18 @@ public class StoreImageActivity extends AppCompatActivity implements
         img_clicked = (ImageView) findViewById(R.id.img_cam_selfie);
         btn_save = (Button) findViewById(R.id.btn_save_selfie);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
-        date = preferences.getString(CommonString.KEY_DATE, null);
         username = preferences.getString(CommonString.KEY_USERNAME, null);
-        intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
-        getSupportActionBar().setTitle("Store image -" +visit_date);
+        getSupportActionBar().setTitle("Store image -" + visit_date);
         flag_deviation = getIntent().getBooleanExtra(CommonString.KEY_PJP_DEVIATION, false);
         str = CommonString.FILE_PATH;
 
         database = new HimalayaDb(this);
         database.open();
-
-        coverage_list = database.getCoverageData(date);
-
         img_cam.setOnClickListener(this);
         img_clicked.setOnClickListener(this);
         btn_save.setOnClickListener(this);
-
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -107,7 +96,8 @@ public class StoreImageActivity extends AppCompatActivity implements
                 ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
             saveDir = new File(CommonString.FILE_PATH);
             saveDir.mkdirs();
         }
@@ -137,6 +127,7 @@ public class StoreImageActivity extends AppCompatActivity implements
     @Override
     public void onClick(View v) {
         int id = v.getId();
+/*
         MaterialCamera materialCamera = new MaterialCamera(this)
                 .saveDir(saveDir)
                 .showPortraitWarning(true)
@@ -145,16 +136,19 @@ public class StoreImageActivity extends AppCompatActivity implements
                 .allowRetry(true)
                 .autoSubmit(false)
                 .labelConfirm(R.string.mcam_use_video);
+*/
         switch (id) {
             case R.id.img_cam_selfie:
-                _pathforcheck = store_cd + "Store" + "Image" + visit_date.replace("/", "") + getCurrentTime().replace(":", "") + ".jpg";
+                _pathforcheck = store_cd + "_StoreImage_" + visit_date.replace("/", "") + "_" + getCurrentTime().replace(":", "") + ".jpg";
                 editor = preferences.edit();
-                editor.putString("imagename", _pathforcheck);
+                /*editor.putString("imagename", _pathforcheck);
                 editor.commit();
                 materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                materialCamera.start(CAMERA_RQ);
-                // _path = CommonString.FILE_PATH + _pathforcheck;
+                materialCamera.start(CAMERA_RQ);*/
+                _path = CommonString.FILE_PATH + _pathforcheck;
                 intime = getCurrentTime();
+                startCameraActivity();
+
                 //  CommonFunctions.startCameraActivity(StoreImageActivity.this, _path);
                 break;
 
@@ -171,7 +165,7 @@ public class StoreImageActivity extends AppCompatActivity implements
                                     cdata.setStoreId(store_cd);
                                     cdata.setVisitDate(visit_date);
                                     cdata.setUserId(username);
-                                    cdata.setInTime(intime);
+                                    cdata.setInTime(getCurrentTime());
                                     cdata.setReason("");
                                     cdata.setReasonid("0");
                                     cdata.setLatitude(lat);
@@ -181,15 +175,12 @@ public class StoreImageActivity extends AppCompatActivity implements
                                     cdata.setStatus(CommonString.KEY_INVALID);
                                     cdata.setPJPDeviation(flag_deviation);
                                     database.InsertCoverageData(cdata);
-                                    database.updateCoverageStatusNew(store_cd, CommonString.KEY_INVALID);
-                                    if (flag_deviation)
-                                        database.InsertPJPDeviationData(store_cd, visit_date);
 
+                                    if (flag_deviation) {
+                                        database.InsertPJPDeviationData(store_cd, visit_date);
+                                    }
                                     SharedPreferences.Editor editor = preferences.edit();
                                     editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
-                                    editor.putString(CommonString.KEY_STORE_IN_TIME, "");
-                                    editor.putString(CommonString.KEY_LATITUDE, "");
-                                    editor.putString(CommonString.KEY_LONGITUDE, "");
                                     editor.commit();
                                     Intent in = new Intent(StoreImageActivity.this, StoreEntry.class);
                                     startActivity(in);
@@ -222,6 +213,7 @@ public class StoreImageActivity extends AppCompatActivity implements
                 break;
 
             case -1:
+/*
                 if (requestCode == CAMERA_RQ) {
                     if (resultCode == RESULT_OK) {
                         File file = new File(data.getData().getPath());
@@ -238,9 +230,9 @@ public class StoreImageActivity extends AppCompatActivity implements
 
                     }
                 }
-                break;
+*/
+                //  break;
 
-/*
                 if (_pathforcheck != null && !_pathforcheck.equals("")) {
                     if (new File(str + _pathforcheck).exists()) {
                         Bitmap bmp = BitmapFactory.decodeFile(str + _pathforcheck);
@@ -251,11 +243,25 @@ public class StoreImageActivity extends AppCompatActivity implements
                         _pathforcheck = "";
                     }
                 }
-*/
+                break;
 
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    protected void startCameraActivity() {
+        try {
+            Log.i("MakeMachine", "startCameraActivity()");
+            File file = new File(_path);
+            Uri outputFileUri = Uri.fromFile(file);
+            Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(intent, 0);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public String getCurrentTime() {

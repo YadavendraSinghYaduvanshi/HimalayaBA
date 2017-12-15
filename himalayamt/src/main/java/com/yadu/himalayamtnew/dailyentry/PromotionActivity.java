@@ -36,7 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.afollestad.materialcamera.MaterialCamera;
+
 import com.yadu.himalayamtnew.R;
 import com.yadu.himalayamtnew.constants.CommonFunctions;
 import com.yadu.himalayamtnew.constants.CommonString;
@@ -63,11 +63,10 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
     ArrayList<StockNewGetterSetter> brandData;
     ArrayList<PromotionInsertDataGetterSetter> skuData;
     HimalayaDb db;
-    String store_cd, visit_date, username, intime;
+    String store_cd, visit_date, username;
     private SharedPreferences preferences;
     ImageView img;
-    boolean ischangedflag = false;
-    String _pathforcheck, _path, str;
+    String _pathforcheck, str,_path;
     private String image1 = "";
     String img1 = "";
     static int grp_position = -1;
@@ -193,6 +192,7 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
             holder.lin_camera.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+/*
                     MaterialCamera materialCamera = new MaterialCamera((Activity) _context)
                             .saveDir(saveDir)
                             .showPortraitWarning(true)
@@ -201,18 +201,20 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
                             .allowRetry(true)
                             .autoSubmit(false)
                             .labelConfirm(R.string.mcam_use_video);
+*/
                     grp_position = groupPosition;
                     child_position = childPosition;
-                    _pathforcheck = store_cd + "Promoter" + "Image" + visit_date.replace("/", "")
-                            + getCurrentTime().replace(":", "") + ".jpg";
+                    _pathforcheck = store_cd + "_PromoterImage_" + visit_date.replace("/", "")
+                            +"_" + getCurrentTime().replace(":", "") + ".jpg";
 
-                    editor = preferences.edit();
+                   /* editor = preferences.edit();
                     editor.putString("imagename", _pathforcheck);
                     editor.commit();
                     materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                    materialCamera.start(CAMERA_RQ);
-                   /* _path = CommonString.FILE_PATH + _pathforcheck;
-                    CommonFunctions.startCameraActivity((Activity) _context, _path);*/
+                    materialCamera.start(CAMERA_RQ);*/
+                   _path = CommonString.FILE_PATH + _pathforcheck;
+                    startCameraActivity();
+                  //  CommonFunctions.startCameraActivity((Activity) _context, _path);
                 }
             });
 
@@ -402,6 +404,8 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
+
+
     boolean validateData(HashMap<StockNewGetterSetter, List<PromotionInsertDataGetterSetter>> listDataChild2,
                          List<StockNewGetterSetter> listDataHeader2) {
         boolean flag = true;
@@ -474,7 +478,6 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
             builder.setMessage(CommonString.ONBACK_ALERT_MESSAGE).setCancelable(false)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            // NavUtils.navigateUpFromSameTask(this);
                             finish();
                             overridePendingTransition(R.anim.activity_back_in, R.anim.activity_back_out);
                         }
@@ -503,6 +506,7 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
                 break;
 
             case -1:
+/*
                 if (requestCode == CAMERA_RQ) {
                     if (resultCode == RESULT_OK) {
                         File file = new File(data.getData().getPath());
@@ -513,8 +517,8 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
                         _pathforcheck = "";
                     }
                 }
+*/
 
-/*
                 if (_pathforcheck != null && !_pathforcheck.equals("")) {
                     if (new File(str + _pathforcheck).exists()) {
                         image1 = _pathforcheck;
@@ -523,7 +527,6 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
                         _pathforcheck = "";
                     }
                 }
-*/
                 break;
         }
 
@@ -537,6 +540,20 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         return formatter.format(m_cal.getTime());
     }
+    protected void startCameraActivity() {
+        try {
+            Log.i("MakeMachine", "startCameraActivity()");
+            File file = new File(_path);
+            Uri outputFileUri = Uri.fromFile(file);
+            Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(intent, 0);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
 
     void declaration() {
         listDataHeader = new ArrayList<>();
@@ -554,7 +571,6 @@ public class PromotionActivity extends AppCompatActivity implements View.OnClick
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         username = preferences.getString(CommonString.KEY_USERNAME, null);
-        intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         setTitle("Promotion - " + visit_date);
         str = CommonString.FILE_PATH;
     }

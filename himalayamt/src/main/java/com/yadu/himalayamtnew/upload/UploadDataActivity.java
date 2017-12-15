@@ -24,15 +24,18 @@ import com.yadu.himalayamtnew.constants.CommonString;
 import com.yadu.himalayamtnew.database.HimalayaDb;
 import com.yadu.himalayamtnew.delegates.CoverageBean;
 import com.yadu.himalayamtnew.himalaya.MainMenuActivity;
+import com.yadu.himalayamtnew.xmlGetterSetter.AllDatabaseTableQueryGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.AssetInsertdataGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.Audit_QuestionDataGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.ChecklistInsertDataGetterSetter;
+import com.yadu.himalayamtnew.xmlGetterSetter.DataCheckedGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.FailureGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.JCPGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.PromotionInsertDataGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.SkuGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.StockNewGetterSetter;
 import com.yadu.himalayamtnew.xmlHandler.FailureXMLHandler;
+import com.yadu.himalayamtnew.xmlHandler.XMLHandlers;
 
 import org.json.JSONArray;
 import org.ksoap2.SoapEnvelope;
@@ -41,6 +44,8 @@ import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -53,39 +58,32 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 public class UploadDataActivity extends Activity {
-    private Dialog dialog;
-    private ProgressBar pb;
-    private TextView percentage, message;
-    String app_ver;
-    private String visit_date, username;
-    private SharedPreferences preferences;
-    private HimalayaDb database;
-    private int factor;
-    String datacheck = "";
-    String[] words;
-    String validity;
-    int mid;
-    Data data;
-
-    boolean upload_status;
-    String Path;
-    String errormsg = "";
-
-    boolean isError = false;
-    boolean up_success_flag = true;
-    String exceptionMessage = "";
-    String resultFinal;
-
     private ArrayList<CoverageBean> coverageBeanlist = new ArrayList<CoverageBean>();
     private FailureGetterSetter failureGetterSetter = null;
     private ArrayList<StockNewGetterSetter> stockData = new ArrayList<>();
+    AllDatabaseTableQueryGetterSetter alldatalist, alldata_stockIMGList, alldata_promotionList,
+            alldata_paidvisibilityList, alldata_auditList = new AllDatabaseTableQueryGetterSetter();
     private ArrayList<StockNewGetterSetter> stockImages = new ArrayList<>();
     private ArrayList<PromotionInsertDataGetterSetter> promotionData = new ArrayList<>();
     private ArrayList<AssetInsertdataGetterSetter> paidVisibility = new ArrayList<>();
     private ArrayList<ChecklistInsertDataGetterSetter> paidVisibilityCheckList = new ArrayList<>();
-    private ArrayList<SkuGetterSetter> sku_list = new ArrayList<>();
     ArrayList<Audit_QuestionDataGetterSetter> auditListData = new ArrayList<>();
+    DataCheckedGetterSetter stockDataChecked = new DataCheckedGetterSetter();
     ArrayList<JCPGetterSetter> pjpDeviationStoreList;
+    private String visit_date, username, app_ver, datacheck = "",
+            validity, errormsg = "", resultFinal, exceptionMessage = "";
+    boolean upload_status, isError = false, up_success_flag = true;
+    private TextView percentage, message, tv_title;
+    String dialogvalue = "Uploading Data";
+    private SharedPreferences preferences;
+    private HimalayaDb database;
+    private Dialog dialog;
+    private ProgressBar pb;
+    private int factor;
+    int eventType;
+    String[] words;
+    int mid;
+    Data data;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,21 +97,17 @@ public class UploadDataActivity extends Activity {
         database.open();
         Intent i = getIntent();
         upload_status = i.getBooleanExtra("UploadAll", false);
-        Path = CommonString.FILE_PATH;
         new UploadTask(this).execute();
     }
 
     private class UploadTask extends AsyncTask<Void, Data, String> {
         private Context context;
-
         UploadTask(Context context) {
             this.context = context;
         }
-
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
             dialog = new Dialog(context);
             dialog.setContentView(R.layout.custom_upload);
             dialog.setTitle("Uploading Data");
@@ -122,14 +116,15 @@ public class UploadDataActivity extends Activity {
             pb = (ProgressBar) dialog.findViewById(R.id.progressBar1);
             percentage = (TextView) dialog.findViewById(R.id.percentage);
             message = (TextView) dialog.findViewById(R.id.message);
+            tv_title = (TextView) dialog.findViewById(R.id.tv_title);
         }
 
         @Override
         protected String doInBackground(Void... params) {
-
             try {
                 data = new Data();
                 if (upload_status == false) {
+                    database.open();
                     coverageBeanlist = database.getCoverageData(visit_date);
                 } else {
                     coverageBeanlist = database.getCoverageData(null);
@@ -143,10 +138,14 @@ public class UploadDataActivity extends Activity {
                     }
                 }
 
+                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                factory.setNamespaceAware(true);
+                XmlPullParser xpp = factory.newPullParser();
                 //PJP DEVIATION
                 String final_xml = "";
                 String onXML = "";
-                pjpDeviationStoreList = database.getPJPDeviationStoreData(visit_date);
+                database.open();
+                pjpDeviationStoreList = database.getPJPDeviationStoreData();
                 if (pjpDeviationStoreList.size() > 0) {
                     for (int j = 0; j < pjpDeviationStoreList.size(); j++) {
                         onXML = "[JCP_DEVIATION]"
@@ -175,16 +174,16 @@ public class UploadDataActivity extends Activity {
                     } else {
                         database.deletePJPDeviationStores();
                     }
+                    data.value = 10;
+                    data.name = "Deviation JCP";
+                    data.dialogname = dialogvalue;
+                    publishProgress(data);
                 }
 
-
-
-                data.value = 10;
-                data.name = "Deviation JCP";
-                publishProgress(data);
-
                 for (int i = 0; i < coverageBeanlist.size(); i++) {
-                    if (!coverageBeanlist.get(i).getStatus().equalsIgnoreCase(CommonString.KEY_U)) {
+                    database.open();
+                    if (!coverageBeanlist.get(i).getStatus().equalsIgnoreCase(CommonString.KEY_D)) {
+                        onXML = "";
                         onXML =
                                 "[DATA]"
                                         + "[USER_DATA]"
@@ -203,42 +202,45 @@ public class UploadDataActivity extends Activity {
                                         + "[/USER_DATA]"
                                         + "[/DATA]";
 
-                        SoapObject request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_DR_STORE_COVERAGE);
+                        SoapObject request = new SoapObject(CommonString.NAMESPACE,
+                                CommonString.METHOD_UPLOAD_DR_STORE_COVERAGE);
                         request.addProperty("onXML", onXML);
                         SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                         envelope.dotNet = true;
                         envelope.setOutputSoapObject(request);
                         HttpTransportSE androidHttpTransport = new HttpTransportSE(CommonString.URL);
-                        androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_DR_STORE_COVERAGE, envelope);
+                        androidHttpTransport.call(CommonString.SOAP_ACTION +
+                                CommonString.METHOD_UPLOAD_DR_STORE_COVERAGE, envelope);
                         Object result = (Object) envelope.getResponse();
                         datacheck = result.toString();
                         datacheck = datacheck.replace("\"", "");
                         words = datacheck.split("\\;");
                         validity = (words[0]);
-
                         if (validity.equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
                             if (coverageBeanlist.get(i).isPJPDeviation()) {
                                 database.updatePJPStoreStatus(coverageBeanlist.get(i).getStoreId(), coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_P);
                             } else {
                                 database.updateStoreStatusOnLeave(coverageBeanlist.get(i).getStoreId(), coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_P);
                             }
+                            coverageBeanlist.get(i).setStatus(CommonString.KEY_P);
                             database.updateCoverageStatus(coverageBeanlist.get(i).getMID(), CommonString.KEY_P);
                         } else {
                             isError = true;
                             continue;
                         }
                         mid = Integer.parseInt((words[1]));
-
                         data.value = 10;
-                        data.name = "Uploading";
+                        data.name = "Coverage uploaded";
+                        data.dialogname = dialogvalue;
                         publishProgress(data);
 
 
                         //Stock Data
                         final_xml = "";
                         onXML = "";
-                        stockData = database.getOpeningStockUpload(coverageBeanlist.get(i).getStoreId());
-
+                        database.open();
+                        alldatalist = database.getOpeningStockUpload(coverageBeanlist.get(i).getStoreId());
+                        stockData = (ArrayList<StockNewGetterSetter>) alldatalist.getDatalist();
                         if (stockData.size() > 0) {
                             for (int j = 0; j < stockData.size(); j++) {
                                 onXML = "[MT_STOCK_DATA]"
@@ -249,48 +251,95 @@ public class UploadDataActivity extends Activity {
                                         + "[OPENING_FACING]" + stockData.get(j).getEd_openingFacing() + "[/OPENING_FACING]"
                                         + "[MIDDAY_STOCK]" + stockData.get(j).getEd_midFacing() + "[/MIDDAY_STOCK]"
                                         + "[CLOSING_STOCK]" + stockData.get(j).getEd_closingFacing() + "[/CLOSING_STOCK]"
-                                        //+ "[STOCK_UNDER_DAYS]" + stockData.get(j).getStock_under45days() + "[/STOCK_UNDER_DAYS]"
                                         + "[/MT_STOCK_DATA]";
 
                                 final_xml = final_xml + onXML;
                             }
 
                             final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
-
                             request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
                             request.addProperty("XMLDATA", sos_xml);
                             request.addProperty("KEYS", "MT_STOCK_DATA");
                             request.addProperty("USERNAME", username);
                             request.addProperty("MID", mid);
-
                             envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                             envelope.dotNet = true;
                             envelope.setOutputSoapObject(request);
-
                             androidHttpTransport = new HttpTransportSE(CommonString.URL);
                             androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
-
                             result = (Object) envelope.getResponse();
+                            if (result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
+                                request.addProperty("UserName", "MT_STOCK_DATA:" + mid);
+                                request.addProperty("Type", "DATA_REACHED");
+                                envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope.dotNet = true;
+                                envelope.setOutputSoapObject(request);
+                                androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport.call(CommonString.SOAP_ACTION_UNIVERSAL, envelope);
+                                Object result_stock = (Object) envelope.getResponse();
+                                if (result_stock.toString() != null) {
+                                    xpp.setInput(new StringReader(result_stock.toString()));
+                                    xpp.next();
+                                    eventType = xpp.getEventType();
+                                    stockDataChecked = XMLHandlers.UploadedDataCheckedXMLHandler(xpp, eventType);
+                                    if (stockDataChecked.getData_checked().equals("0")) {
+                                        return " Parsing Stock data. Please try again";
 
-                            if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                //   return CommonString.METHOD_UPLOAD_XML;
+                                    }
+
+                                }
+                            } else {
                                 isError = true;
+
                             }
+                            data.value = 30;
+                            data.name = "Stock Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
 
-                        data.value = 20;
-                        data.name = "Stock Data";
-                        publishProgress(data);
+
+                        final_xml = "";
+                        onXML = "";
+                        if (alldatalist.getSql_query() != null && !alldatalist.getSql_query().equals("")) {
+                            onXML = "[MT_STOCK_TABLE_QUERY]"
+                                    + "[MID]" + mid + "[/MID]"
+                                    + "[CREATED_BY]" + username + "[/CREATED_BY]"
+                                    + "[STOCK_QUERY]" + alldatalist.getSql_query() + "[/STOCK_QUERY]"
+                                    + "[/MT_STOCK_TABLE_QUERY]";
+
+                            final_xml = final_xml + onXML;
+                            final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
+                            request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
+                            request.addProperty("XMLDATA", sos_xml);
+                            request.addProperty("KEYS", "MT_STOCK_TABLE_QUERY");
+                            request.addProperty("USERNAME", username);
+                            request.addProperty("MID", mid);
+                            envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope.dotNet = true;
+                            envelope.setOutputSoapObject(request);
+                            androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
+                            result = (Object) envelope.getResponse();
+                            if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                isError = true;
+                            }
+                            data.value = 35;
+                            data.name = "Stock Table Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
+                        }
 
 
                         //Stock Image Data
                         final_xml = "";
                         onXML = "";
-                        stockImages = database.getStockImageUploadData(coverageBeanlist.get(i).getStoreId());
-
+                        database.open();
+                        alldata_stockIMGList = database.getStockImageUploadData(coverageBeanlist.get(i).getStoreId());
+                        stockImages = (ArrayList<StockNewGetterSetter>) alldata_stockIMGList.getDatalist();
                         if (stockImages.size() > 0) {
                             for (int j = 0; j < stockImages.size(); j++) {
-
                                 if (!stockImages.get(j).getImg_cam().equals("") || !stockImages.get(j).getImg_cat_one().equals("")
                                         || !stockImages.get(j).getImg_cat_two().equals("")) {
 
@@ -315,31 +364,83 @@ public class UploadDataActivity extends Activity {
                             request.addProperty("KEYS", "MT_STOCK_IMAGE_DATA_NEW");
                             request.addProperty("USERNAME", username);
                             request.addProperty("MID", mid);
-
                             envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                             envelope.dotNet = true;
                             envelope.setOutputSoapObject(request);
-
                             androidHttpTransport = new HttpTransportSE(CommonString.URL);
                             androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
-
                             result = (Object) envelope.getResponse();
+                            if (result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
+                                request.addProperty("UserName", "MT_STOCK_IMAGE_DATA_NEW:" + mid);
+                                request.addProperty("Type", "DATA_REACHED");
+                                envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope.dotNet = true;
+                                envelope.setOutputSoapObject(request);
+                                androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport.call(CommonString.SOAP_ACTION_UNIVERSAL, envelope);
+                                Object result_stock = (Object) envelope.getResponse();
+                                if (result_stock.toString() != null) {
+                                    xpp.setInput(new StringReader(result_stock.toString()));
+                                    xpp.next();
+                                    eventType = xpp.getEventType();
+                                    stockDataChecked = null;
+                                    stockDataChecked = XMLHandlers.UploadedDataCheckedXMLHandler(xpp, eventType);
+                                    if (stockDataChecked.getData_checked().equals("0")) {
+                                        return " Parsing Stock images data. Please try again";
 
+                                    }
+
+                                }
+                            } else {
+                                isError = true;
+                            }
+                            data.value = 40;
+                            data.name = "Stock Image Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
+                        }
+
+
+                        //stock image table data
+                        final_xml = "";
+                        onXML = "";
+                        if (alldata_stockIMGList.getSql_query() != null && !alldata_stockIMGList.getSql_query().equals("")) {
+                            onXML = "[MT_STOCK_IMAGES_TABLE_QUERY]"
+                                    + "[MID]" + mid + "[/MID]"
+                                    + "[CREATED_BY]" + username + "[/CREATED_BY]"
+                                    + "[STOCK_IMAGES_QUERY]" + alldata_stockIMGList.getSql_query() + "[/STOCK_IMAGES_QUERY]"
+                                    + "[/MT_STOCK_IMAGES_TABLE_QUERY]";
+
+                            final_xml = final_xml + onXML;
+                            final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
+                            request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
+                            request.addProperty("XMLDATA", sos_xml);
+                            request.addProperty("KEYS", "MT_STOCK_IMAGES_TABLE_QUERY");
+                            request.addProperty("USERNAME", username);
+                            request.addProperty("MID", mid);
+                            envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope.dotNet = true;
+                            envelope.setOutputSoapObject(request);
+                            androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
+                            result = (Object) envelope.getResponse();
                             if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
                                 isError = true;
                             }
+                            data.value = 45;
+                            data.name = "Stock Images Table Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
-
-                        data.value = 25;
-                        data.name = "Stock Image Data";
-                        publishProgress(data);
 
 
                         //Promotion Data
                         final_xml = "";
                         onXML = "";
-                        promotionData = database.getPromotionUploadData(coverageBeanlist.get(i).getStoreId());
-
+                        database.open();
+                        alldata_promotionList = database.getPromotionUploadData(coverageBeanlist.get(i).getStoreId());
+                        promotionData = (ArrayList<PromotionInsertDataGetterSetter>) alldata_promotionList.getDatalist();
                         if (promotionData.size() > 0) {
                             for (int j = 0; j < promotionData.size(); j++) {
                                 onXML = "[MT_PROMOTION_DATA]"
@@ -363,37 +464,89 @@ public class UploadDataActivity extends Activity {
                             request.addProperty("KEYS", "MT_PROMOTION_DATA");
                             request.addProperty("USERNAME", username);
                             request.addProperty("MID", mid);
-
                             envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                             envelope.dotNet = true;
                             envelope.setOutputSoapObject(request);
-
                             androidHttpTransport = new HttpTransportSE(CommonString.URL);
                             androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
-
                             result = (Object) envelope.getResponse();
+                            if (result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
+                                request.addProperty("UserName", "MT_PROMOTION_DATA:" + mid);
+                                request.addProperty("Type", "DATA_REACHED");
+                                envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope.dotNet = true;
+                                envelope.setOutputSoapObject(request);
+                                androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport.call(CommonString.SOAP_ACTION_UNIVERSAL, envelope);
+                                Object result_stock = (Object) envelope.getResponse();
+                                if (result_stock.toString() != null) {
+                                    xpp.setInput(new StringReader(result_stock.toString()));
+                                    xpp.next();
+                                    eventType = xpp.getEventType();
+                                    stockDataChecked = null;
+                                    stockDataChecked = XMLHandlers.UploadedDataCheckedXMLHandler(xpp, eventType);
+                                    if (stockDataChecked.getData_checked().equals("0")) {
+                                        return " Parsing Promotion data . Please try again";
 
+                                    }
+
+                                }
+                            } else {
+                                isError = true;
+                            }
+                            data.value = 50;
+                            data.name = "Promotion Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
+
+                        }
+
+
+                        final_xml = "";
+                        onXML = "";
+                        if (alldata_promotionList.getSql_query() != null && !alldata_promotionList.getSql_query().equals("")) {
+                            onXML = "[MT_PROMOTION_TABLE_QUERY]"
+                                    + "[MID]" + mid + "[/MID]"
+                                    + "[CREATED_BY]" + username + "[/CREATED_BY]"
+                                    + "[PROMOTION_QUERY]" + alldata_promotionList.getSql_query() + "[/PROMOTION_QUERY]"
+                                    + "[/MT_PROMOTION_TABLE_QUERY]";
+
+                            final_xml = final_xml + onXML;
+                            final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
+                            request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
+                            request.addProperty("XMLDATA", sos_xml);
+                            request.addProperty("KEYS", "MT_PROMOTION_TABLE_QUERY");
+                            request.addProperty("USERNAME", username);
+                            request.addProperty("MID", mid);
+                            envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope.dotNet = true;
+                            envelope.setOutputSoapObject(request);
+                            androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
+                            result = (Object) envelope.getResponse();
                             if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
                                 isError = true;
                             }
+                            data.value = 55;
+                            data.name = "Promotion Table Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
-
-                        data.value = 30;
-                        data.name = "Promotion Data";
-                        publishProgress(data);
 
 
                         //Paid Visibility Data
                         final_xml = "";
-                        String checkList_xml = "", paid_visibility = "", skuList_xml = "";
+                        String checkList_xml = "",
+                                paid_visibility = "", skuList_xml = "";
                         onXML = "";
-
-                        paidVisibility = database.getAssetUploadData(coverageBeanlist.get(i).getStoreId());
-
+                        database.open();
+                        alldata_paidvisibilityList = database.getAssetUploadData(coverageBeanlist.get(i).getStoreId());
+                        paidVisibility = (ArrayList<AssetInsertdataGetterSetter>) alldata_paidvisibilityList.getDatalist();
                         if (paidVisibility.size() > 0) {
                             for (int j = 0; j < paidVisibility.size(); j++) {
-
                                 //CHECKLIST
+                                database.open();
                                 paidVisibilityCheckList = database.getAssetCheckListUploadData(paidVisibility.get(j).getKey_id());
                                 String checkList_list_xml = "", checkList = "";
                                 if (paidVisibilityCheckList.size() > 0) {
@@ -411,24 +564,6 @@ public class UploadDataActivity extends Activity {
                                     }
                                 }
 
-                                //skuList
-                                //sku_list = database.getAssetSkuLisNewtData(paidVisibility.get(j).getKey_id());
-                                String sku_list_xml = "", sku = "";
-                                if (sku_list.size() > 0) {
-                                    for (int s = 0; s < sku_list.size(); s++) {
-                                        sku = "[SKU_LIST_DATA]"
-                                                + "[MID]" + mid + "[/MID]"
-                                                + "[CREATED_BY]" + username + "[/CREATED_BY]"
-                                                + "[COMMON_ID]" + paidVisibility.get(j).getKey_id() + "[/COMMON_ID]"
-                                                + "[SKU_CD]" + sku_list.get(s).getSKU_ID() + "[/SKU_CD]"
-                                                + "[BRAND_CD]" + sku_list.get(s).getBRAND_ID() + "[/BRAND_CD]"
-                                                + "[SKU_QUANTITY]" + sku_list.get(s).getQUANTITY() + "[/SKU_QUANTITY]"
-                                                + "[/SKU_LIST_DATA]";
-
-                                        sku_list_xml = sku_list_xml + sku;
-                                    }
-                                }
-
 
                                 onXML = "[PAID_VISIBILITY]"
                                         + "[MID]" + mid + "[/MID]"
@@ -440,44 +575,94 @@ public class UploadDataActivity extends Activity {
                                         + "[REMARK]" + paidVisibility.get(j).getRemark() + "[/REMARK]"
                                         + "[IMAGE]" + paidVisibility.get(j).getImg() + "[/IMAGE]"
                                         + "[CHECKLIST]" + checkList_list_xml + "[/CHECKLIST]"
-                                        //+ "[SKULIST]" + sku_list_xml + "[/SKULIST]"
                                         + "[/PAID_VISIBILITY]";
 
                                 paid_visibility = paid_visibility + onXML;
                             }
 
-
                             final String sos_xml = "[DATA]" + paid_visibility + "[/DATA]";
-
                             request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
                             request.addProperty("XMLDATA", sos_xml);
                             request.addProperty("KEYS", "MT_PAID_VISIBILITY_DATA_NEW");
                             request.addProperty("USERNAME", username);
                             request.addProperty("MID", mid);
-
                             envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
                             envelope.dotNet = true;
                             envelope.setOutputSoapObject(request);
-
                             androidHttpTransport = new HttpTransportSE(CommonString.URL);
                             androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
-
                             result = (Object) envelope.getResponse();
+                            if (result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
+                                request.addProperty("UserName", "MT_PAID_VISIBILITY_DATA_NEW:" + mid);
+                                request.addProperty("Type", "DATA_REACHED");
+                                envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope.dotNet = true;
+                                envelope.setOutputSoapObject(request);
+                                androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport.call(CommonString.SOAP_ACTION_UNIVERSAL, envelope);
+                                Object result_stock = (Object) envelope.getResponse();
+                                if (result_stock.toString() != null) {
+                                    xpp.setInput(new StringReader(result_stock.toString()));
+                                    xpp.next();
+                                    eventType = xpp.getEventType();
+                                    stockDataChecked = null;
+                                    stockDataChecked = XMLHandlers.UploadedDataCheckedXMLHandler(xpp, eventType);
+                                    if (stockDataChecked.getData_checked().equals("0")) {
+                                        return " Parsing PaidVisibility data . Please try again";
 
+                                    }
+
+                                }
+                            } else {
+                                isError = true;
+                            }
+                            data.value = 60;
+                            data.name = "Paid Visibility Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
+                        }
+
+
+                        final_xml = "";
+                        onXML = "";
+                        if (alldata_paidvisibilityList.getSql_query() != null && !alldata_paidvisibilityList.getSql_query().
+                                equals("")) {
+                            onXML = "[MT_PAIDVISIBILITY_TABLE_QUERY]"
+                                    + "[MID]" + mid + "[/MID]"
+                                    + "[CREATED_BY]" + username + "[/CREATED_BY]"
+                                    + "[PAIDVISIBILITY_QUERY]" + alldata_paidvisibilityList.getSql_query() + "[/PAIDVISIBILITY_QUERY]"
+                                    + "[/MT_PAIDVISIBILITY_TABLE_QUERY]";
+
+                            final_xml = final_xml + onXML;
+                            final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
+                            request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
+                            request.addProperty("XMLDATA", sos_xml);
+                            request.addProperty("KEYS", "MT_PAIDVISIBILITY_TABLE_QUERY");
+                            request.addProperty("USERNAME", username);
+                            request.addProperty("MID", mid);
+                            envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope.dotNet = true;
+                            envelope.setOutputSoapObject(request);
+                            androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
+                            result = (Object) envelope.getResponse();
                             if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
                                 isError = true;
                             }
+                            data.value = 65;
+                            data.name = "Paid Visibility Table Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
-                        data.value = 40;
-                        data.name = "Paid Visibility Data";
-                        publishProgress(data);
+
 
                         //Audit Data
                         final_xml = "";
                         onXML = "";
-
-                        auditListData = database.getAfterSaveAuditQuestionAnswerData(coverageBeanlist.get(i).getStoreId(), "1");
-
+                        database.open();
+                        alldata_auditList = database.getAfterSaveAuditQuestionAnswerDataWithoutCategory(coverageBeanlist.get(i).getStoreId());
+                        auditListData = (ArrayList<Audit_QuestionDataGetterSetter>) alldata_auditList.getDatalist();
                         if (auditListData.size() > 0) {
                             for (int j = 0; j < auditListData.size(); j++) {
                                 onXML = "[MT_AUDIT_DATA]"
@@ -503,221 +688,305 @@ public class UploadDataActivity extends Activity {
                             androidHttpTransport = new HttpTransportSE(CommonString.URL);
                             androidHttpTransport.call(CommonString.SOAP_ACTION + CommonString.METHOD_UPLOAD_XML, envelope);
                             result = (Object) envelope.getResponse();
+                            if (result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_NAME_UNIVERSAL_DOWNLOAD);
+                                request.addProperty("UserName", "MT_AUDIT_DATA_NEW:" + mid);
+                                request.addProperty("Type", "DATA_REACHED");
+                                envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope.dotNet = true;
+                                envelope.setOutputSoapObject(request);
+                                androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport.call(CommonString.SOAP_ACTION_UNIVERSAL, envelope);
+                                Object result_stock = (Object) envelope.getResponse();
+                                if (result_stock.toString() != null) {
+                                    xpp.setInput(new StringReader(result_stock.toString()));
+                                    xpp.next();
+                                    eventType = xpp.getEventType();
+                                    stockDataChecked = null;
+                                    stockDataChecked = XMLHandlers.UploadedDataCheckedXMLHandler(xpp, eventType);
+                                    if (stockDataChecked.getData_checked().equals("0")) {
+                                        return " Parsing Audit data . Please try again";
+                                    }
+                                }
+                            } else {
+                                isError = true;
+                            }
+                            data.value = 70;
+                            data.name = "Audit Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
+                        }
 
+                        final_xml = "";
+                        onXML = "";
+                        if (alldata_auditList.getSql_query() != null && !alldata_auditList.getSql_query().equals("")) {
+                            onXML = "[MT_AUDIT_TABLE_QUERY]"
+                                    + "[MID]" + mid + "[/MID]"
+                                    + "[CREATED_BY]" + username + "[/CREATED_BY]"
+                                    + "[AUDIT_QUERY]" + alldata_auditList.getSql_query() + "[/AUDIT_QUERY]"
+                                    + "[/MT_AUDIT_TABLE_QUERY]";
+
+                            final_xml = final_xml + onXML;
+                            final String sos_xml = "[DATA]" + final_xml + "[/DATA]";
+                            request = new SoapObject(CommonString.NAMESPACE, CommonString.METHOD_UPLOAD_XML);
+                            request.addProperty("XMLDATA", sos_xml);
+                            request.addProperty("KEYS", "MT_AUDIT_TABLE_QUERY");
+                            request.addProperty("USERNAME", username);
+                            request.addProperty("MID", mid);
+                            envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope.dotNet = true;
+                            envelope.setOutputSoapObject(request);
+                            androidHttpTransport = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport.call(CommonString.SOAP_ACTION +
+                                    CommonString.METHOD_UPLOAD_XML, envelope);
+                            result = (Object) envelope.getResponse();
                             if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
                                 isError = true;
                             }
+                            data.value = 75;
+                            data.name = "Audit Table Data";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
-
-                        data.value = 45;
-                        data.name = "Audit Data";
-                        publishProgress(data);
-
-
-                        //Images Upload
-                        //Store Image
-                        if (coverageBeanlist.size() > 0) {
-                            if (coverageBeanlist.get(i).getImage() != null && !coverageBeanlist.get(i).getImage().equals("")) {
-                                if (new File(CommonString.FILE_PATH + coverageBeanlist.get(i).getImage()).exists()) {
-                                    result = UploadImage(coverageBeanlist.get(i).getImage(), "MTStoreImages");
-                                    if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                        isError = true;
-                                    }
-                                    runOnUiThread(new Runnable() {
-                                        public void run() {
-                                            message.setText("MTStoreImages Uploaded");
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                        data.value = 50;
-                        data.name = "StoreImages";
-                        publishProgress(data);
-
-
-                        //Stock Images
-                        if (stockImages.size() > 0) {
-                            for (int j = 0; j < stockImages.size(); j++) {
-
-                                if (stockImages.get(j).getImg_cam() != null && !stockImages.get(j).getImg_cam().equals("")) {
-
-                                    if (new File(CommonString.FILE_PATH + stockImages.get(j).getImg_cam()).exists()) {
-
-                                        result = UploadImage(stockImages.get(j).getImg_cam(), "MTStockImages");
-
-                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                            //    return "StoreImages";
-                                            isError = true;
-                                        }
-
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                message.setText("MTStockImages Uploaded");
-                                            }
-                                        });
-                                    }
-                                }
-
-                                if (stockImages.get(j).getImg_cat_one() != null && !stockImages.get(j).getImg_cat_one().equals("")) {
-
-                                    if (new File(CommonString.FILE_PATH + stockImages.get(j).getImg_cat_one()).exists()) {
-
-                                        result = UploadImage(stockImages.get(j).getImg_cat_one(), "MTStockImages");
-
-                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                            isError = true;
-                                        }
-
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                message.setText("MTStockImages Uploaded");
-                                            }
-                                        });
-                                    }
-                                }
-
-                                if (stockImages.get(j).getImg_cat_two() != null && !stockImages.get(j).getImg_cat_two().equals("")) {
-
-                                    if (new File(CommonString.FILE_PATH + stockImages.get(j).getImg_cat_two()).exists()) {
-
-                                        result = UploadImage(stockImages.get(j).getImg_cat_two(), "MTStockImages");
-
-                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                            isError = true;
-                                        }
-
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                message.setText("MTStockImages Uploaded");
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-
-                        }
-                        data.value = 55;
-                        data.name = "MTStockImages";
-                        publishProgress(data);
-
-
-                        //Promotion Images
-                        if (promotionData.size() > 0) {
-                            for (int j = 0; j < promotionData.size(); j++) {
-                                if (promotionData.get(j).getCamera() != null && !promotionData.get(j).getCamera().equals("")) {
-
-                                    if (new File(CommonString.FILE_PATH + promotionData.get(j).getCamera()).exists()) {
-
-                                        result = UploadImage(promotionData.get(j).getCamera(), "MTPromotionImages");
-
-                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                            isError = true;
-                                        }
-
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                message.setText("MTPromotionImages Uploaded");
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-
-                        }
-                        data.value = 60;
-                        data.name = "PromotionImages";
-                        publishProgress(data);
-
-
-                        //Paid Visibility Images
-                        if (paidVisibility.size() > 0) {
-
-                            for (int j = 0; j < paidVisibility.size(); j++) {
-
-                                if (paidVisibility.get(j).getImg() != null && !paidVisibility.get(j).getImg().equals("")) {
-
-                                    if (new File(CommonString.FILE_PATH + paidVisibility.get(j).getImg()).exists()) {
-
-                                        result = UploadImage(paidVisibility.get(j).getImg(), "MTPaidVisibilityImages");
-
-                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                                            isError = true;
-                                        }
-
-                                        runOnUiThread(new Runnable() {
-                                            public void run() {
-                                                message.setText("MTPaidVisibility Images Uploaded");
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-
-                        }
-                        data.value = 70;
-                        data.name = "PaidVisibilityImage";
-                        publishProgress(data);
 
 
                         data.value = factor * (i + 1);
                         data.name = "Uploading";
+                        data.dialogname = dialogvalue;
                         publishProgress(data);
 
 
                         // SET COVERAGE STATUS
-                        String final_xml1 = "";
-                        String onXML1 = "";
-                        onXML1 = "[COVERAGE_STATUS]"
-                                + "[STORE_ID]" + coverageBeanlist.get(i).getStoreId() + "[/STORE_ID]"
-                                + "[VISIT_DATE]" + coverageBeanlist.get(i).getVisitDate() + "[/VISIT_DATE]"
-                                + "[USER_ID]" + username + "[/USER_ID]"
-                                + "[STATUS]" + CommonString.KEY_U + "[/STATUS]"
-                                + "[/COVERAGE_STATUS]";
+                        if (!isError) {
+                            String final_xml1 = "", onXML1 = "";
+                            onXML1 = "[COVERAGE_STATUS]"
+                                    + "[STORE_ID]" + coverageBeanlist.get(i).getStoreId() + "[/STORE_ID]"
+                                    + "[VISIT_DATE]" + coverageBeanlist.get(i).getVisitDate() + "[/VISIT_DATE]"
+                                    + "[USER_ID]" + username + "[/USER_ID]"
+                                    + "[STATUS]" + CommonString.KEY_D + "[/STATUS]"
+                                    + "[/COVERAGE_STATUS]";
 
-                        final_xml1 = final_xml1 + onXML1;
+                            final_xml1 = final_xml1 + onXML1;
 
-                        final String sos_xml = "[DATA]" + final_xml1 + "[/DATA]";
-
-                        SoapObject request1 = new SoapObject(CommonString.NAMESPACE, CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS);
-                        request1.addProperty("onXML", sos_xml);
-                        SoapSerializationEnvelope envelope1 = new SoapSerializationEnvelope(SoapEnvelope.VER11);
-                        envelope1.dotNet = true;
-                        envelope1.setOutputSoapObject(request1);
-
-                        HttpTransportSE androidHttpTransport1 = new HttpTransportSE(CommonString.URL);
-                        androidHttpTransport1.call(CommonString.SOAP_ACTION + CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS, envelope1);
-
-                        Object result1 = (Object) envelope1.getResponse();
-
-                        if (result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                            database.open();
-
-                            if (coverageBeanlist.get(i).isPJPDeviation()) {
-                                database.updatePJPStoreStatus(coverageBeanlist.get(i).getStoreId(),
-                                        coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_U);
-                            } else {
-                                database.updateStoreStatusOnLeave(coverageBeanlist.get(i).getStoreId(),
-                                        coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_U);
+                            final String sos_xml = "[DATA]" + final_xml1 + "[/DATA]";
+                            SoapObject request1 = new SoapObject(CommonString.NAMESPACE, CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS);
+                            request1.addProperty("onXML", sos_xml);
+                            SoapSerializationEnvelope envelope1 = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                            envelope1.dotNet = true;
+                            envelope1.setOutputSoapObject(request1);
+                            HttpTransportSE androidHttpTransport1 = new HttpTransportSE(CommonString.URL);
+                            androidHttpTransport1.call(CommonString.SOAP_ACTION +
+                                    CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS, envelope1);
+                            Object result1 = (Object) envelope1.getResponse();
+                            if (result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                database.open();
+                                if (coverageBeanlist.get(i).isPJPDeviation()) {
+                                    database.updatePJPStoreStatus(coverageBeanlist.get(i).getStoreId(),
+                                            coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_D);
+                                } else {
+                                    database.updateStoreStatusOnLeave(coverageBeanlist.get(i).getStoreId(),
+                                            coverageBeanlist.get(i).getVisitDate(), CommonString.KEY_D);
+                                }
+                                coverageBeanlist.get(i).setStatus(CommonString.KEY_D);
+                                database.updateCoverageStatus(coverageBeanlist.get(i).getMID(), CommonString.KEY_D);
                             }
-
-                            database.updateCoverageStatus(coverageBeanlist.get(i).getMID(), CommonString.KEY_U);
-
-
-                            database.deleteSpecificStoreData(coverageBeanlist.get(i).getStoreId());
+                            if (!result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                isError = true;
+                                continue;
+                            }
+                            data.value = 100;
+                            data.name = "Coverage Status";
+                            data.dialogname = dialogvalue;
+                            publishProgress(data);
                         }
-
-                        if (!result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
-                            isError = true;
-                        }
-
-                        data.value = 100;
-                        publishProgress(data);
-                        resultFinal = result.toString();
                     }
                 }
-            }
-            catch (MalformedURLException e) {
+                File dir = new File(CommonString.FILE_PATH);
+                ArrayList<String> list = new ArrayList();
+                list = getFileNames(dir.listFiles());
+                Object result;
+                if (list.size() > 0) {
+                    //  dialog.setTitle();
+                    for (int i1 = 0; i1 < list.size(); i1++) {
+                        if (list.get(i1).contains("_StoreImage_") || list.get(i1).contains("_NonWorking_")) {
+                            if (new File(CommonString.FILE_PATH + list.get(i1)).exists()) {
+                                File originalFile = new File(CommonString.FILE_PATH + list.get(i1));
+                                result = UploadImage(originalFile.getName(), "MTStoreImages");
+                                if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    isError = true;
+                                }
+                                runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        message.setText("MTStoreImages Uploaded");
+                                    }
+                                });
+                                data.value = 20;
+                                data.name = "StoreImages";
+                                data.dialogname = "Uploaded images";
+                                publishProgress(data);
+                            }
+
+
+                        } else if (list.get(i1).contains("_HimalayaSTKImg_") || list.get(i1).contains("_CatSTKImgOne_")
+                                || list.get(i1).contains("_CatSTKImgTwo_")) {
+                            if (new File(CommonString.FILE_PATH + list.get(i1)).exists()) {
+                                File originalFile = new File(CommonString.FILE_PATH + list.get(i1));
+                                result = UploadImage(originalFile.getName(), "MTStockImages");
+                                if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    isError = true;
+                                }
+                                runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        message.setText("MTStockImages Uploaded");
+                                    }
+                                });
+                                data.value = 40;
+                                data.name = "MTStockImages";
+                                data.dialogname = "Uploaded images";
+                                publishProgress(data);
+                            }
+
+
+                        } else if (list.get(i1).contains("_AssetImage_")) {
+                            if (new File(CommonString.FILE_PATH + list.get(i1)).exists()) {
+                                File originalFile = new File(CommonString.FILE_PATH + list.get(i1));
+                                result = UploadImage(originalFile.getName(), "MTPaidVisibilityImages");
+                                if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    isError = true;
+                                }
+                                runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        message.setText("MTPaidVisibilityImages Uploaded");
+                                    }
+                                });
+                                data.value = 60;
+                                data.name = "MTPaidVisibilityImages";
+                                data.dialogname = "Uploaded images";
+                                publishProgress(data);
+                            }
+
+
+                        } else if (list.get(i1).contains("_PromoterImage_")) {
+                            if (new File(CommonString.FILE_PATH + list.get(i1)).exists()) {
+                                File originalFile = new File(CommonString.FILE_PATH + list.get(i1));
+                                result = UploadImage(originalFile.getName(), "MTPromotionImages");
+                                if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    isError = true;
+                                }
+                                runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        message.setText("MTPromotionImages Uploaded");
+                                    }
+                                });
+                                data.value = 80;
+                                data.name = "MTPromotionImages";
+                                data.dialogname = "Uploaded images";
+                                publishProgress(data);
+                            }
+                        }
+                    }
+                    // SET COVERAGE STATUS
+                    if (coverageBeanlist.size() > 0) {
+                        if (!isError)
+                            for (int k = 0; k < coverageBeanlist.size(); k++) {
+                                if (coverageBeanlist.get(k).getStatus().equals(CommonString.KEY_D)) {
+                                    String final_xml1 = "", onXML1 = "";
+                                    onXML1 = "[COVERAGE_STATUS]"
+                                            + "[STORE_ID]" + coverageBeanlist.get(k).getStoreId() + "[/STORE_ID]"
+                                            + "[VISIT_DATE]" + coverageBeanlist.get(k).getVisitDate() + "[/VISIT_DATE]"
+                                            + "[USER_ID]" + username + "[/USER_ID]"
+                                            + "[STATUS]" + CommonString.KEY_U + "[/STATUS]"
+                                            + "[/COVERAGE_STATUS]";
+                                    final_xml1 = final_xml1 + onXML1;
+                                    final String sos_xml = "[DATA]" + final_xml1 + "[/DATA]";
+                                    SoapObject request1 = new SoapObject(CommonString.NAMESPACE, CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS);
+                                    request1.addProperty("onXML", sos_xml);
+                                    SoapSerializationEnvelope envelope1 = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                    envelope1.dotNet = true;
+                                    envelope1.setOutputSoapObject(request1);
+                                    HttpTransportSE androidHttpTransport1 = new HttpTransportSE(CommonString.URL);
+                                    androidHttpTransport1.call(CommonString.SOAP_ACTION + CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS, envelope1);
+                                    Object result1 = (Object) envelope1.getResponse();
+                                    if (result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                        database.open();
+                                        if (coverageBeanlist.get(k).isPJPDeviation()) {
+                                            database.updatePJPStoreStatus(coverageBeanlist.get(k).getStoreId(),
+                                                    coverageBeanlist.get(k).getVisitDate(), CommonString.KEY_U);
+                                        } else {
+                                            database.updateStoreStatusOnLeave(coverageBeanlist.get(k).getStoreId(),
+                                                    coverageBeanlist.get(k).getVisitDate(), CommonString.KEY_U);
+                                        }
+
+                                        database.updateCoverageStatus(coverageBeanlist.get(k).getMID(), CommonString.KEY_U);
+                                        coverageBeanlist.get(k).setStatus(CommonString.KEY_U);
+                                        database.deleteSpecificStoreData(coverageBeanlist.get(k).getStoreId());
+                                    }
+                                    if (!result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                        isError = true;
+                                    }
+
+                                    data.value = 100;
+                                    data.name = "Updating status..";
+                                    data.dialogname = "Update status";
+                                    publishProgress(data);
+                                    resultFinal = result1.toString();
+                                }
+                            }
+
+                    }
+                } else {
+
+                    // SET COVERAGE STATUS
+                    if (coverageBeanlist.size() > 0) {
+                        for (int k = 0; k < coverageBeanlist.size(); k++) {
+                            String final_xml1 = "";
+                            String onXML1 = "";
+                            if (coverageBeanlist.get(k).getStatus().equalsIgnoreCase(CommonString.KEY_D)) {
+                                onXML1 = "[COVERAGE_STATUS]"
+                                        + "[STORE_ID]" + coverageBeanlist.get(k).getStoreId() + "[/STORE_ID]"
+                                        + "[VISIT_DATE]" + coverageBeanlist.get(k).getVisitDate() + "[/VISIT_DATE]"
+                                        + "[USER_ID]" + username + "[/USER_ID]"
+                                        + "[STATUS]" + CommonString.KEY_U + "[/STATUS]"
+                                        + "[/COVERAGE_STATUS]";
+                                final_xml1 = final_xml1 + onXML1;
+                                final String sos_xml = "[DATA]" + final_xml1 + "[/DATA]";
+                                SoapObject request1 = new SoapObject(CommonString.NAMESPACE, CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS);
+                                request1.addProperty("onXML", sos_xml);
+                                SoapSerializationEnvelope envelope1 = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+                                envelope1.dotNet = true;
+                                envelope1.setOutputSoapObject(request1);
+                                HttpTransportSE androidHttpTransport1 = new HttpTransportSE(CommonString.URL);
+                                androidHttpTransport1.call(CommonString.SOAP_ACTION + CommonString.MEHTOD_UPLOAD_COVERAGE_STATUS, envelope1);
+                                Object result1 = (Object) envelope1.getResponse();
+                                if (result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    database.open();
+                                    if (coverageBeanlist.get(k).isPJPDeviation()) {
+                                        database.updatePJPStoreStatus(coverageBeanlist.get(k).getStoreId(),
+                                                coverageBeanlist.get(k).getVisitDate(), CommonString.KEY_U);
+                                    } else {
+                                        database.updateStoreStatusOnLeave(coverageBeanlist.get(k).getStoreId(), coverageBeanlist.get(k).getVisitDate(), CommonString.KEY_U);
+                                    }
+                                    database.updateCoverageStatus(coverageBeanlist.get(k).getMID(), CommonString.KEY_U);
+                                    coverageBeanlist.get(k).setStatus(CommonString.KEY_U);
+                                    database.deleteSpecificStoreData(coverageBeanlist.get(k).getStoreId());
+                                }
+                                if (!result1.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+                                    isError = true;
+                                }
+
+                                data.value = 100;
+                                data.name = "Updating status..";
+                                data.dialogname = "Update status";
+                                publishProgress(data);
+                                resultFinal = result1.toString();
+                            }
+                        }
+
+                    }
+
+                }
+
+            } catch (MalformedURLException e) {
                 up_success_flag = false;
                 exceptionMessage = e.toString();
 
@@ -730,7 +999,7 @@ public class UploadDataActivity extends Activity {
                 exceptionMessage = e.toString();
             }
 
-            if (up_success_flag == true) {
+            if (up_success_flag) {
                 return resultFinal;
             } else {
                 return exceptionMessage;
@@ -742,6 +1011,8 @@ public class UploadDataActivity extends Activity {
             pb.setProgress(values[0].value);
             percentage.setText(values[0].value + "%");
             message.setText(values[0].name);
+            tv_title.setText(values[0].dialogname);
+
         }
 
         @Override
@@ -751,7 +1022,7 @@ public class UploadDataActivity extends Activity {
             if (isError) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(UploadDataActivity.this);
                 builder.setTitle("Parinaam");
-                builder.setMessage("Uploaded successfully with some problem ").setCancelable(false)
+                builder.setMessage("Uploaded successfully with some problem . Please try again").setCancelable(false)
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 //temporary code
@@ -769,7 +1040,6 @@ public class UploadDataActivity extends Activity {
                     builder.setMessage(CommonString.MESSAGE_UPLOAD_DATA).setCancelable(false)
                             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    //temparory code
                                     Intent i = new Intent(getBaseContext(), MainMenuActivity.class);
                                     startActivity(i);
                                     finish();
@@ -788,6 +1058,8 @@ public class UploadDataActivity extends Activity {
     class Data {
         int value;
         String name;
+        String dialogname;
+
     }
 
     private void message(String str) {
@@ -816,7 +1088,7 @@ public class UploadDataActivity extends Activity {
         errormsg = "";
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(Path + path, o);
+        BitmapFactory.decodeFile(CommonString.FILE_PATH + path, o);
 
         // The new size we want to scale to
         final int REQUIRED_SIZE = 1024;
@@ -836,7 +1108,7 @@ public class UploadDataActivity extends Activity {
         // Decode with inSampleSize
         BitmapFactory.Options o2 = new BitmapFactory.Options();
         o2.inSampleSize = scale;
-        Bitmap bitmap = BitmapFactory.decodeFile(Path + path, o2);
+        Bitmap bitmap = BitmapFactory.decodeFile(CommonString.FILE_PATH + path, o2);
 
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bao);
@@ -880,7 +1152,7 @@ public class UploadDataActivity extends Activity {
                 return CommonString.KEY_FAILURE;
             }
         } else {
-            new File(Path + path).delete();
+            new File(CommonString.FILE_PATH + path).delete();
             SharedPreferences.Editor editor = preferences.edit();
             editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
             editor.commit();
@@ -892,6 +1164,15 @@ public class UploadDataActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        database.close();
     }
+
+    public ArrayList<String> getFileNames(File[] file) {
+        ArrayList<String> arrayFiles = new ArrayList<String>();
+        if (file.length > 0) {
+            for (int i = 0; i < file.length; i++)
+                arrayFiles.add(file[i].getName());
+        }
+        return arrayFiles;
+    }
+
 }

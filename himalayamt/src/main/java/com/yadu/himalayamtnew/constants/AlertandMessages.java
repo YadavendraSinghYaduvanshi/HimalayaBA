@@ -98,6 +98,7 @@ public class AlertandMessages {
         AlertDialog alert = builder.create();
         alert.show();
     }
+    public static final String MESSAGE_SOCKETEXCEPTION = "Network Communication Failure. Check Your Network Connection";
 
 
 }

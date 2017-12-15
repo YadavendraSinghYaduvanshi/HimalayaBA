@@ -26,7 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.afollestad.materialcamera.MaterialCamera;
+
 import com.yadu.himalayamtnew.R;
 import com.yadu.himalayamtnew.constants.CommonFunctions;
 import com.yadu.himalayamtnew.constants.CommonString;
@@ -41,12 +41,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 
-public class NonWorkingReason extends AppCompatActivity implements AdapterView.OnItemSelectedListener, View.OnClickListener {
+public class NonWorkingReason extends AppCompatActivity implements AdapterView.OnItemSelectedListener,
+        View.OnClickListener {
     private Spinner reasonspinner;
     private HimalayaDb database;
-    String reasonname, reasonid, entry_allow, image, entry, reason_reamrk, intime;
+    String reasonname, reasonid, entry_allow, image, entry, _path, reason_reamrk, intime;
     Button save;
-    protected String _path, str;
+    protected String str;
     protected String _pathforcheck = "";
     private String image1 = "";
     private SharedPreferences preferences;
@@ -63,6 +64,7 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
     private final static int CAMERA_RQ = 6969;
     private SharedPreferences.Editor editor = null;
     boolean flag_deviation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
@@ -76,7 +78,6 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
         rel_cam = (RelativeLayout) findViewById(R.id.relimgcam);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -84,17 +85,33 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
         _UserId = preferences.getString(CommonString.KEY_USERNAME, "");
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         store_id = preferences.getString(CommonString.KEY_STORE_CD, "");
+        getSupportActionBar().setTitle("Non Working -" + visit_date);
         flag_deviation = getIntent().getBooleanExtra(CommonString.KEY_PJP_DEVIATION, false);
-
 
         database = new HimalayaDb(this);
         database.open();
         str = CommonString.FILE_PATH;
-        reasondata = database.getNonWorkingData();
-        intime = getCurrentTime();
+        jcp = database.getJCPData(visit_date);
+        if (jcp.size() > 0) {
+            try {
+                for (int i = 0; i < jcp.size(); i++) {
+                    boolean flag = false;
+                    if (jcp.get(i).getUploadStatus().get(0).equals(CommonString.KEY_U) ||
+                            jcp.get(i).getUploadStatus().get(0).equals(CommonString.KEY_D)
+                            || jcp.get(i).getUploadStatus().get(0).equals(CommonString.STORE_STATUS_LEAVE)) {
+                        flag = true;
+                        reasondata.clear();
+                        reasondata = database.getNonWorkingDataByFlag(flag);
+                        break;
+                    } else {
+                        reasondata = database.getNonWorkingDataByFlag(flag);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-        camera.setOnClickListener(this);
-        save.setOnClickListener(this);
 
         reason_adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
         reason_adapter.add("Select Reason");
@@ -105,10 +122,15 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
         reasonspinner.setAdapter(reason_adapter);
         reason_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         reasonspinner.setOnItemSelectedListener(this);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
             saveDir = new File(CommonString.FILE_PATH);
             saveDir.mkdirs();
         }
+
+        intime = getCurrentTime();
+        camera.setOnClickListener(this);
+        save.setOnClickListener(this);
     }
 
     @Override
@@ -166,29 +188,42 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
                 Log.i("MakeMachine", "User cancelled");
                 break;
             case -1:
-                if (requestCode == CAMERA_RQ) {
-                    if (resultCode == RESULT_OK) {
-                        File file = new File(data.getData().getPath());
-                        _pathforcheck = file.getName();
-                        camera.setImageDrawable(getResources().getDrawable(R.drawable.camera_list_tick));
-                        image1 = _pathforcheck;
-                    }
-                }
-
-
-/*
                 if (_pathforcheck != null && !_pathforcheck.equals("")) {
                     if (new File(str + _pathforcheck).exists()) {
                         camera.setImageDrawable(getResources().getDrawable(R.drawable.camera_list_tick));
                         image1 = _pathforcheck;
+                        _pathforcheck = "";
                     }
                 }
-*/
+
                 break;
         }
-
     }
 
+    /* @SuppressWarnings("deprecation")
+     @Override
+     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+         Log.i("MakeMachine", "resultCode: " + resultCode);
+         switch (resultCode) {
+             case 0:
+                 Log.i("MakeMachine", "User cancelled");
+                 break;
+             case -1:
+                 if (requestCode == CAMERA_RQ) {
+                     if (resultCode == RESULT_OK) {
+                         File file = new File(data.getData().getPath());
+                         _pathforcheck = file.getName();
+                         camera.setImageDrawable(getResources().getDrawable(R.drawable.camera_list_tick));
+                         image1 = _pathforcheck;
+                     }
+                 }
+
+
+                 break;
+         }
+
+     }
+ */
     public boolean imageAllowed() {
         boolean result = true;
         if (image.equalsIgnoreCase("true")) {
@@ -206,23 +241,25 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
 
     @Override
     public void onClick(View v) {
-        MaterialCamera materialCamera = new MaterialCamera(this)
+       /* MaterialCamera materialCamera = new MaterialCamera(this)
                 .saveDir(saveDir)
                 .showPortraitWarning(true)
                 .allowRetry(true)
                 .defaultToFrontFacing(false)
                 .allowRetry(true)
                 .autoSubmit(false)
-                .labelConfirm(R.string.mcam_use_video);
+                .labelConfirm(R.string.mcam_use_video);*/
         if (v.getId() == R.id.imgcam) {
-            _pathforcheck = store_id + "NonWorking" + _UserId + ".jpg";
-            editor = preferences.edit();
-            editor.putString("imagename", _pathforcheck);
+            _pathforcheck = store_id + "_NonWorking_" + _UserId + ".jpg";
+            _path = CommonString.FILE_PATH + _pathforcheck;
+            startCameraActivity();
+          //  CommonFunctions.startCameraActivity(this, _path);
+
+            //  editor = preferences.edit();
+           /* editor.putString("imagename", _pathforcheck);
             editor.commit();
             materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-            materialCamera.start(CAMERA_RQ);
-         /*   _path = CommonString.FILE_PATH + _pathforcheck;
-            CommonFunctions.startCameraActivity(NonWorkingReason.this, _path);*/
+            materialCamera.start(CAMERA_RQ);*/
         }
         if (v.getId() == R.id.save) {
 
@@ -243,10 +280,10 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
                                             database.deleteAllTables();
 
                                             //jeevan
-                                            if (database.getJCPData(visit_date).size()>0){
+                                            if (database.getJCPData(visit_date).size() > 0) {
                                                 jcp = database.getJCPData(visit_date);
-                                            }else {
-                                                jcp=database.getPJPDeviationData(visit_date) ;
+                                            } else {
+                                                jcp = database.getPJPDeviationData(visit_date);
                                             }
 
                                             for (int i = 0; i < jcp.size(); i++) {
@@ -280,9 +317,6 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
                                                 SharedPreferences.Editor editor = preferences.edit();
                                                 editor.putString(CommonString.KEY_STOREVISITED_STATUS + stoteid, "No");
                                                 editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
-                                                editor.putString(CommonString.KEY_STORE_IN_TIME, "");
-                                                editor.putString(CommonString.KEY_LATITUDE, "");
-                                                editor.putString(CommonString.KEY_LONGITUDE, "");
                                                 editor.commit();
                                             }
 
@@ -314,13 +348,10 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
                                                         visit_date, CommonString.STORE_STATUS_LEAVE);
                                             }
 
-                                            SharedPreferences.Editor editor = preferences.edit();
 
+                                            SharedPreferences.Editor editor = preferences.edit();
                                             editor.putString(CommonString.KEY_STOREVISITED_STATUS + store_id, "No");
                                             editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
-                                            editor.putString(CommonString.KEY_STORE_IN_TIME, "");
-                                            editor.putString(CommonString.KEY_LATITUDE, "");
-                                            editor.putString(CommonString.KEY_LONGITUDE, "");
                                             editor.commit();
                                         }
                                         finish();
@@ -337,13 +368,16 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
                         alert = builder.create();
                         alert.show();
                     } else {
-                        Toast.makeText(getApplicationContext(), "Please enter required remark reason", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(),
+                                "Please enter required remark reason", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(getApplicationContext(), "Please Capture Image", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(),
+                            "Please Capture Image", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(getApplicationContext(), "Please Select a Reason", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),
+                        "Please Select a Reason", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -367,12 +401,26 @@ public class NonWorkingReason extends AppCompatActivity implements AdapterView.O
 
     }
 
+    protected void startCameraActivity() {
+        try {
+            Log.i("MakeMachine", "startCameraActivity()");
+            File file = new File(_path);
+            Uri outputFileUri = Uri.fromFile(file);
+            Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(intent, 0);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            finish();
             overridePendingTransition(R.anim.activity_back_in, R.anim.activity_back_out);
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }

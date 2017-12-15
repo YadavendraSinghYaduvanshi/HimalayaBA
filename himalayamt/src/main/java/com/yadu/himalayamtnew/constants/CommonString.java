@@ -16,11 +16,12 @@ public class CommonString {
     public static final String KEY_VERSION = "version";
     public static final String NAMESPACE = "http://tempuri.org/";
     public static final String METHOD_LOGIN = "UserLoginDetail";
-    public static final String URL = "http://himalaya.parinaam.in/himalaya.asmx";
-    public static final String SOAP_ACTION_LOGIN = "http://tempuri.org/"
-            + METHOD_LOGIN;
+  //  public static final String URL_ = "http://himalayaba.parinaam.in/himalayaba.asmx";
+    //for himalaya mt
+  public static final String URL = "http://himalaya.parinaam.in/himalaya.asmx";
+    public static final String SOAP_ACTION_LOGIN = "http://tempuri.org/" + METHOD_LOGIN;
     public static final String KEY_FAILURE = "Failure";
-    public static final String KEY_NO_DATA = "NoData";
+
     public static final String MESSAGE_FAILURE = "Server Error.Please Access After Some Time";
     public static final String MESSAGE_FALSE = "Invalid User";
     public static final String KEY_CHANGED = "Changed";
@@ -28,7 +29,7 @@ public class CommonString {
     public static final String MESSAGE_CHANGED = "Invalid UserId Or Password / Password Has Been Changed.";
     public static final String KEY_DATE = "date";
     public static final String METHOD_Checkout_StatusNew = "Upload_Store_ChecOut_Status_V1";
-    public static final String KEY_FOOD_STORE = "FOOD_STORE";
+
     public static final String KEY_USER_TYPE = "RIGHTNAME";
     public static final String KEY_SUCCESS = "Success";
     public static final String MESSAGE_EXCEPTION = "Problem Occured : Report The Problem To Parinaam";
@@ -93,13 +94,15 @@ public class CommonString {
     public static final String MESSAGE_JCP_FALSE = "Data is not found in ";
     public static final String MESSAGE_NO_DATA = "No Data For Upload";
     public static final String FILE_PATH = Environment.getExternalStorageDirectory() + "/Himalaya_MT_Images/";
+  public static final String BACKUP_PATH = Environment.getExternalStorageDirectory() + "/Himalaya_MT_backup/";
+
     //endregion
     public static final String KEY_SUCCESS_chkout = "Success";
     public static final String SOAP_ACTION_UPLOAD_IMAGE = "http://tempuri.org/" + METHOD_UPLOAD_IMAGE;
     public static final String CREATE_TABLE_COVERAGE_DATA = "CREATE TABLE  IF NOT EXISTS "
             + TABLE_COVERAGE_DATA + " ("
             + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
-            + KEY_STORE_ID + " VARCHAR,USER_ID VARCHAR, "
+            + KEY_STORE_ID + " INTEGER,USER_ID VARCHAR, "
             + KEY_IN_TIME + " VARCHAR,"
             + KEY_OUT_TIME + " VARCHAR,"
             + KEY_VISIT_DATE + " VARCHAR,"
@@ -233,7 +236,7 @@ public class CommonString {
             + KEY_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
             + CHECK_LIST_ID
-            + " VARCHAR,"
+            + " INTEGER,"
             + CHECK_LIST
             + " VARCHAR,"
             + CHECK_LIST_TEXT
@@ -243,10 +246,10 @@ public class CommonString {
             + KEY_STORE_CD
             + " INTEGER,"
             + ASSET_CD
-            + " VARCHAR,"
+            + " INTEGER,"
 
             + "CATEGORY_CD"
-            + " VARCHAR,"
+            + " INTEGER,"
 
             + KEY_VISIT_DATE
             + " VARCHAR)";
@@ -441,13 +444,13 @@ public class CommonString {
             + " VARCHAR,"
 
             + "BRAND_CD"
-            + " VARCHAR,"
+            + " INTEGER,"
 
             + "BRAND"
             + " VARCHAR,"
 
             + "COMMONID"
-            + " VARCHAR,"
+            + " INTEGER,"
 
             + "SKU_QUANTITY"
             + " VARCHAR"
@@ -528,7 +531,7 @@ public class CommonString {
             + KEY_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
             + CHECK_LIST_ID
-            + " VARCHAR,"
+            + " INTEGER,"
             + CHECK_LIST
             + " VARCHAR,"
             + CHECK_LIST_TEXT
@@ -536,7 +539,7 @@ public class CommonString {
             + CHECK_LIST_TYPE
             + " VARCHAR,"
             + COMMONID
-            + " VARCHAR,"
+            + " INTEGER,"
             + REASON_ID
             + " INTEGER)";
 
@@ -544,7 +547,7 @@ public class CommonString {
     public static final String CREATE_TABLE_PJP_DEVIATION = "CREATE TABLE  IF NOT EXISTS "
             + TABLE_PJP_DEVIATION + " (" + KEY_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
-            + KEY_STORE_CD + " VARCHAR, "
+            + KEY_STORE_CD + " INTEGER, "
             + KEY_VISIT_DATE + " VARCHAR)";
 
 }

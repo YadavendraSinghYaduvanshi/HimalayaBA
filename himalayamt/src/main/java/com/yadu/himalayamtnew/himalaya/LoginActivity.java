@@ -53,7 +53,6 @@ import java.net.MalformedURLException;
  */
 public class LoginActivity extends AppCompatActivity implements OnClickListener,
         LocationListener {
-
     private AutoCompleteTextView museridView;
     private EditText mPasswordView;
     private SharedPreferences preferences = null;
@@ -65,9 +64,9 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
     private Context context;
     private boolean isChecked;
     LoginGetterSetter lgs = null;
-    String app_ver, version_name;
+    String app_ver;
     static int counter = 1;
-
+    boolean loginflag = true;
     Button museridSignInButton;
 
     @Override
@@ -131,12 +130,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
             museridView.setError(getString(R.string.error_enter_password));
             focusView = museridView;
             cancel = true;
-        } /*else if (!isuseridValid(userid)) {
-            museridView.setError(getString(R.string.error_invalid_userid));
-            focusView = museridView;
-            cancel = true;
-        }*/
-
+        }
         if (cancel) {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
@@ -261,7 +255,6 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
                             xpp.next();
                             eventType = xpp.getEventType();
                             lgs = XMLHandlers.loginXMLHandler(xpp, eventType);
-
                         } catch (XmlPullParserException e) {
                             error_msg = CommonString.MESSAGE_EXCEPTION;
                             e.printStackTrace();
@@ -275,10 +268,9 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
                         editor.putString(CommonString.KEY_PASSWORD, password);
                         editor.putString(CommonString.KEY_VERSION, lgs.getVERSION());
                         editor.putString(CommonString.KEY_PATH, lgs.getPATH());
-                        //editor.putString(CommonString.KEY_DATE, "04/05/2017");
+                        // editor.putString(CommonString.KEY_DATE, "04/05/2017");
                         editor.putString(CommonString.KEY_DATE, lgs.getDATE());
                         editor.putString(CommonString.KEY_USER_TYPE, lgs.getRIGHTNAME());
-
                         editor.commit();
                         return CommonString.KEY_SUCCESS;
                     }
@@ -289,6 +281,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
                 //  return "";
 
             } catch (MalformedURLException e) {
+                loginflag = false;
                 error_msg = CommonString.MESSAGE_EXCEPTION;
                 e.printStackTrace();
 
@@ -311,7 +304,8 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
 
 
             } catch (Exception e) {
-                error_msg = CommonString.MESSAGE_EXCEPTION;
+                loginflag = false;
+                error_msg = CommonString.MESSAGE_SOCKETEXCEPTION;
                 e.printStackTrace();
 
             }
@@ -323,19 +317,21 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
             // TODO Auto-generated method stub
             super.onPostExecute(result);
             dialog.dismiss();
-            if (result.equals(CommonString.KEY_SUCCESS)) {
-                if (lgs.getVERSION().equals(Integer.toString(versionCode))) {
-                    Intent intent = new Intent(getBaseContext(), MainMenuActivity.class);
-                    startActivity(intent);
-                    finish();
+            if (loginflag) {
+                if (result.equals(CommonString.KEY_SUCCESS)) {
+                    if (lgs.getVERSION().equals(Integer.toString(versionCode))) {
+                        Intent intent = new Intent(getBaseContext(), MainMenuActivity.class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Intent intent = new Intent(getBaseContext(), AutoUpdateActivity.class);
+                        intent.putExtra(CommonString.KEY_PATH, preferences.getString(CommonString.KEY_PATH, ""));
+                        startActivity(intent);
+                        finish();
+                    }
                 } else {
-                    Intent intent = new Intent(getBaseContext(), AutoUpdateActivity.class);
-                    intent.putExtra(CommonString.KEY_PATH, preferences.getString(CommonString.KEY_PATH, ""));
-                    startActivity(intent);
-                    finish();
+                    AlertandMessages.showAlert((Activity) context, "Error in login :" + error_msg, false);
                 }
-            } else {
-                AlertandMessages.showAlert((Activity) context, "Error in login :" + error_msg, false);
             }
         }
     }
@@ -361,7 +357,7 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
         return flag;
     }
 
-    void declaration() {
+    private void declaration() {
         context = this;
         TextView tv_version = (TextView) findViewById(R.id.tv_version_code);
         tv_version.setText("Version - " + app_ver);
@@ -369,14 +365,15 @@ public class LoginActivity extends AppCompatActivity implements OnClickListener,
         museridView = (AutoCompleteTextView) findViewById(R.id.userid);
         mPasswordView = (EditText) findViewById(R.id.password);
         museridSignInButton = (Button) findViewById(R.id.user_login_button);
-        // museridView.setText("testmer");
-        //mPasswordView.setText("cpm123");
+       /* museridView.setText("testmer");
+        mPasswordView.setText("cpm123");*/
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         p_username = preferences.getString(CommonString.KEY_USERNAME, null);
         p_password = preferences.getString(CommonString.KEY_PASSWORD, null);
         isChecked = preferences.getBoolean(CommonString.KEY_REMEMBER, false);
         editor = preferences.edit();
     }
+
 
 }
 

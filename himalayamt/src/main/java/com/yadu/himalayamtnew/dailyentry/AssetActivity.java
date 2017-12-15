@@ -43,8 +43,8 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
+
+
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
@@ -56,9 +56,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.afollestad.materialcamera.MaterialCamera;
+
 import com.yadu.himalayamtnew.R;
-import com.yadu.himalayamtnew.constants.CommonFunctions;
+
 import com.yadu.himalayamtnew.constants.CommonString;
 import com.yadu.himalayamtnew.database.HimalayaDb;
 import com.yadu.himalayamtnew.xmlGetterSetter.AssetChecklistReasonGettersetter;
@@ -67,7 +67,7 @@ import com.yadu.himalayamtnew.xmlGetterSetter.BrandGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.ChecklistInsertDataGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.MappingAssetChecklistGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.SkuGetterSetter;
-import com.yadu.himalayamtnew.xmlGetterSetter.StockNewGetterSetter;
+
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -90,7 +90,7 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
     ArrayList<AssetInsertdataGetterSetter> skuData;
     HimalayaDb db;
     private SharedPreferences preferences;
-    String store_cd, visit_date, username, intime;
+    String store_cd, visit_date, username;
     ImageView img;
     boolean ischangedflag = false;
     String _pathforcheck, _path, str;
@@ -107,6 +107,7 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
     File saveDir = null;
     private final static int CAMERA_RQ = 6969;
     private SharedPreferences.Editor editor = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
@@ -120,10 +121,8 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
         btnSave.setOnClickListener(this);
         expListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
-            public void onScroll(AbsListView view, int firstVisibleItem,
-                                 int visibleItemCount, int totalItemCount) {
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
             }
-
             @Override
             public void onScrollStateChanged(AbsListView arg0, int arg1) {
                 expListView.invalidateViews();
@@ -137,7 +136,8 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
             return;
         }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_GRANTED) {
             saveDir = new File(CommonString.FILE_PATH);
             saveDir.mkdirs();
         }
@@ -149,7 +149,6 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
         listDataChild.clear();
         mappingChecklistDataGetterSetters = db.getMapingCheckListData();
         categoryData = db.getAssetCategoryData(store_cd);
-
         if (categoryData.size() > 0) {
             // Adding child data
             for (int i = 0; i < categoryData.size(); i++) {
@@ -163,13 +162,13 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                     }
                 } else {
                     for (int j = 0; j < skuData.size(); j++) {
-
                         ArrayList<SkuGetterSetter> listSkuData = db.getPaidVisibilitySkuListData(skuData.get(j).getKey_id());
                         if (listSkuData.size() > 0) {
                             skuData.get(j).setSkulist(listSkuData);
                         }
 
-                        ArrayList<ChecklistInsertDataGetterSetter> check_list = db.getCheckListWithReasonData(skuData.get(j).getKey_id());
+                        ArrayList<ChecklistInsertDataGetterSetter> check_list =
+                                db.getCheckListWithReasonData(skuData.get(j).getKey_id());
 
                         if (check_list.size() > 0) {
                             skuData.get(j).setChecklist(check_list);
@@ -277,7 +276,6 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
             holder.img_ref.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
                     showPlanogram(_listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition).getPlanogram_img());
                 }
             });
@@ -288,9 +286,7 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                 public void onClick(View v) {
                     ischangedflag = true;
                     String val = ((ToggleButton) v).getText().toString();
-
                     _listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition).setPresent(val);
-
                     if (val.equals("NO")) {
                         _listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition).setImg("");
                         _listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition).getChecklist().clear();
@@ -306,13 +302,16 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
             holder.btn_checkList.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showChecklistDialogue(childText.getAsset_cd(), childText.getCategory_cd(), _listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition));
+                    showChecklistDialogue(childText.getAsset_cd(),
+                            childText.getCategory_cd(),
+                            _listDataChild.get(listDataHeader.get(groupPosition)).get(childPosition));
                 }
             });
 
             holder.btn_cam.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+/*
                     MaterialCamera materialCamera = new MaterialCamera((Activity) _context)
                             .saveDir(saveDir)
                             .showPortraitWarning(true)
@@ -321,18 +320,21 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                             .allowRetry(true)
                             .autoSubmit(false)
                             .labelConfirm(R.string.mcam_use_video);
+*/
                     grp_position = groupPosition;
                     child_position = childPosition;
 
-                    _pathforcheck = store_cd + "Asset" + "Image" + visit_date.replace("/", "") + getCurrentTime().replace(":", "") + ".jpg";
+                    _pathforcheck = store_cd + "_AssetImage_" +
+                            visit_date.replace("/", "") + "_" + getCurrentTime().replace(":", "") + ".jpg";
 
-                    editor = preferences.edit();
+                   /* editor = preferences.edit();
                     editor.putString("imagename", _pathforcheck);
                     editor.commit();
                     materialCamera.stillShot().labelConfirm(R.string.mcam_use_stillshot);
-                    materialCamera.start(CAMERA_RQ);
-                   /* _path = CommonString.FILE_PATH + _pathforcheck;
-                    CommonFunctions.startCameraActivity((Activity) context, _path);*/
+                    materialCamera.start(CAMERA_RQ);*/
+                    _path = CommonString.FILE_PATH + _pathforcheck;
+                    startCameraActivity();
+                   // CommonFunctions.startCameraActivity((Activity) context, _path);
                 }
             });
 
@@ -658,14 +660,14 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         Log.i("MakeMachine", "resultCode: " + resultCode);
         switch (resultCode) {
             case 0:
                 Log.i("MakeMachine", "User cancelled");
                 break;
             case -1:
-                if (requestCode == CAMERA_RQ) {
+/*
+               if (requestCode == CAMERA_RQ) {
                     if (resultCode == RESULT_OK) {
                         File file = new File(data.getData().getPath());
                         _pathforcheck = file.getName();
@@ -675,9 +677,8 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                         _pathforcheck = "";
                     }
                 }
+*/
 
-
-/*
                 if (_pathforcheck != null && !_pathforcheck.equals("")) {
                     if (new File(str + _pathforcheck).exists()) {
                         image1 = _pathforcheck;
@@ -686,7 +687,6 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                         _pathforcheck = "";
                     }
                 }
-*/
 
                 break;
         }
@@ -694,7 +694,8 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
     }
 
     //CheckList
-    public void showChecklistDialogue(final String asset_cd, final String category_cd, final AssetInsertdataGetterSetter asset_child) {
+    public void showChecklistDialogue(final String asset_cd, final String category_cd,
+                                      final AssetInsertdataGetterSetter asset_child) {
         boolean update_flag = false;
         checklistInsertDataGetterSetters = asset_child.getChecklist();
         if (!(checklistInsertDataGetterSetters.size() > 0)) {
@@ -708,10 +709,8 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
             dialog.setCancelable(false);
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
             dialog.setContentView(R.layout.checklist_dialogue_layout);
-
             listView = (ListView) dialog.findViewById(R.id.lv_checklist);
             listView.setAdapter(new MyAdaptor(context));
-
             Button btnsave = (Button) dialog.findViewById(R.id.btn_save_checklist);
             Button btncancel = (Button) dialog.findViewById(R.id.btn_cancel_checklist);
 
@@ -735,7 +734,6 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
                     String error_msg = "";
 
                     for (int i = 0; i < checklistInsertDataGetterSetters.size(); i++) {
-
                         if (checklistInsertDataGetterSetters.get(i).getChecklist_type().equals("FREETEXT")
                                 && checklistInsertDataGetterSetters.get(i).getChecklist_text().equals("")) {
                             isvalid = false;
@@ -1349,10 +1347,23 @@ public class AssetActivity extends AppCompatActivity implements View.OnClickList
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         username = preferences.getString(CommonString.KEY_USERNAME, null);
-        intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         setTitle("Paid Visibility - " + visit_date);
         str = CommonString.FILE_PATH;
         listDataHeader = new ArrayList<>();
         listDataChild = new HashMap<>();
     }
+    protected void startCameraActivity() {
+        try {
+            Log.i("MakeMachine", "startCameraActivity()");
+            File file = new File(_path);
+            Uri outputFileUri = Uri.fromFile(file);
+            Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(intent, 0);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
 }

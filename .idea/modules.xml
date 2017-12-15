@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HimalayaMTLatest.iml" filepath="$PROJECT_DIR$/HimalayaMTLatest.iml" />
+      <module fileurl="file://F:\jeevanAndroidProject\androidProject\HimalayaMTNew\HimalayaMTLatest.iml" filepath="F:\jeevanAndroidProject\androidProject\HimalayaMTNew\HimalayaMTLatest.iml" />
       <module fileurl="file://$PROJECT_DIR$/HimalayaMTNew.iml" filepath="$PROJECT_DIR$/HimalayaMTNew.iml" />
       <module fileurl="file://$PROJECT_DIR$/himalayamt/himalayamt.iml" filepath="$PROJECT_DIR$/himalayamt/himalayamt.iml" />
       <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
