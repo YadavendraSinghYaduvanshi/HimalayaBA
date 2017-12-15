@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.yadu.himalayamtnew.constants.CommonString;
 import com.yadu.himalayamtnew.delegates.CoverageBean;
+import com.yadu.himalayamtnew.xmlGetterSetter.AllDatabaseTableQueryGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.AssetChecklistGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.AssetChecklistReasonGettersetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.AssetInsertdataGetterSetter;
@@ -47,15 +48,12 @@ import java.util.List;
  */
 
 public class HimalayaDb extends SQLiteOpenHelper {
-
-    public static final String DATABASE_NAME = "HIMALAYA_MT_DATABASE2";
-    public static final int DATABASE_VERSION = 3;
+    public static final String DATABASE_NAME = "HIMALAYA_MT_DATABASE4";
+    public static final int DATABASE_VERSION = 5;
     private SQLiteDatabase db;
-
     public HimalayaDb(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
-
     public void open() {
         try {
             db = this.getWritableDatabase();
@@ -65,7 +63,6 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
         db.execSQL(TableBean.getjcptable());
         db.execSQL(TableBean.getSkumastertable());
         db.execSQL(TableBean.getMappingavailtable());
@@ -120,10 +117,9 @@ public class HimalayaDb extends SQLiteOpenHelper {
     public ArrayList<CoverageBean> getCoverageData(String visitdate) {
         ArrayList<CoverageBean> list = new ArrayList<CoverageBean>();
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT  * from " + CommonString.TABLE_COVERAGE_DATA
-                    + " where " + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
+            dbcursor = db.rawQuery("SELECT  * FROM " + CommonString.TABLE_COVERAGE_DATA
+                    + " WHERE " + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -132,23 +128,22 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     CoverageBean sb = new CoverageBean();
 
                     sb.setStoreId(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_STORE_ID)));
-                    sb.setUserId((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_MERCHANDISER_ID))));
-                    sb.setInTime(((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IN_TIME)))));
-                    sb.setOutTime(((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_OUT_TIME)))));
-                    sb.setVisitDate((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE))))));
-                    sb.setLatitude(((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LATITUDE)))));
-                    sb.setLongitude(((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LONGITUDE)))));
-                    sb.setStatus((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_STATUS))))));
-                    sb.setImage((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IMAGE))))));
-                    sb.setReason((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON))))));
-                    sb.setReasonid((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON_ID))))));
+                    sb.setUserId(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_MERCHANDISER_ID)));
+                    sb.setInTime(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IN_TIME)));
+                    sb.setOutTime(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_OUT_TIME)));
+                    sb.setVisitDate(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE)));
+                    sb.setLatitude(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LATITUDE)));
+                    sb.setLongitude(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LONGITUDE)));
+                    sb.setStatus(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_STATUS)));
+                    sb.setImage(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IMAGE)));
+                    sb.setReason(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON)));
+                    sb.setReasonid(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON_ID)));
                     sb.setPJPDeviation(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_PJP_DEVIATION)).equals("1"));
-                    sb.setMID(Integer.parseInt(((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_ID))))));
-
+                    sb.setMID(Integer.parseInt(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_ID))));
                     if (dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_REMARK)) == null) {
                         sb.setRemark("");
                     } else {
-                        sb.setRemark((((dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_REMARK))))));
+                        sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_REMARK)));
                     }
 
                     list.add(sb);
@@ -163,6 +158,52 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
         return list;
     }
+
+
+    public ArrayList<CoverageBean> getCoverageDataForPreVious() {
+        ArrayList<CoverageBean> list = new ArrayList<CoverageBean>();
+        Cursor dbcursor = null;
+        try {
+            dbcursor = db.rawQuery("SELECT  * from COVERAGE_DATA WHERE Coverage <>'" + CommonString.KEY_C + "'", null);
+            if (dbcursor != null) {
+                dbcursor.moveToFirst();
+                while (!dbcursor.isAfterLast()) {
+                    CoverageBean sb = new CoverageBean();
+
+                    sb.setStoreId(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_STORE_ID)));
+                    sb.setUserId(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_MERCHANDISER_ID)));
+                    sb.setInTime(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IN_TIME)));
+                    sb.setOutTime(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_OUT_TIME)));
+                    sb.setVisitDate(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE)));
+                    sb.setLatitude(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LATITUDE)));
+                    sb.setLongitude(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_LONGITUDE)));
+                    sb.setStatus(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_STATUS)));
+                    sb.setImage(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_IMAGE)));
+                    sb.setReason(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON)));
+                    sb.setReasonid(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_REASON_ID)));
+                    sb.setPJPDeviation(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_PJP_DEVIATION)).equals("1"));
+                    sb.setMID(Integer.parseInt(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_ID))));
+
+                    if (dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_REMARK)) == null) {
+                        sb.setRemark("");
+                    } else {
+                        sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_COVERAGE_REMARK)));
+                    }
+
+                    list.add(sb);
+                    dbcursor.moveToNext();
+                }
+                dbcursor.close();
+                return list;
+            }
+        } catch (Exception e) {
+            Log.d("Exception ", "when fetching Coverage Data!!!!!!!!!!!!!!!!!!!!!" + e.toString());
+        }
+
+        return list;
+    }
+
+
     //endregion
 
     //region Deepak_isSkuMasterDownloaded
@@ -281,23 +322,24 @@ public class HimalayaDb extends SQLiteOpenHelper {
                 while (!dbcursor.isAfterLast()) {
                     CoverageBean sb = new CoverageBean();
 
-                    sb.setUserId((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_MERCHANDISER_ID))));
-                    sb.setInTime(((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_IN_TIME)))));
-                    sb.setOutTime(((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_OUT_TIME)))));
-                    sb.setVisitDate((((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE))))));
-                    sb.setLatitude(((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_LATITUDE)))));
-                    sb.setLongitude(((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_LONGITUDE)))));
-                    sb.setStatus((((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_COVERAGE_STATUS))))));
+                    sb.setUserId(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_MERCHANDISER_ID)));
+                    sb.setInTime(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_IN_TIME)));
+                    sb.setOutTime(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_OUT_TIME)));
+                    sb.setVisitDate(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE)));
+                    sb.setLatitude(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_LATITUDE)));
+                    sb.setLongitude(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_LONGITUDE)));
+                    sb.setStatus(dbcursor.getString(dbcursor
+                            .getColumnIndexOrThrow(CommonString.KEY_COVERAGE_STATUS)));
                     sb.setReasonid(dbcursor.getString(dbcursor
                             .getColumnIndexOrThrow(CommonString.KEY_REASON_ID)));
-                    sb.setPJPDeviation(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_PJP_DEVIATION)).equals("1"));
+                    sb.setPJPDeviation(dbcursor.getString(dbcursor.getColumnIndexOrThrow
+                            (CommonString.KEY_PJP_DEVIATION)).equals("1"));
 
                     list.add(sb);
                     dbcursor.moveToNext();
@@ -770,11 +812,8 @@ public class HimalayaDb extends SQLiteOpenHelper {
     public boolean isCoverageDataFilled(String visit_date) {
         boolean filled = false;
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT * FROM COVERAGE_DATA " +
-                    "where " + CommonString.KEY_VISIT_DATE + "<>'" + visit_date + "'", null);
-
+            dbcursor = db.rawQuery("SELECT * FROM COVERAGE_DATA WHERE " + CommonString.KEY_VISIT_DATE + "<>'" + visit_date + /*"' AND Coverage <>'" + CommonString.KEY_INVALID +*/ "'", null);
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 int icount = dbcursor.getInt(0);
@@ -838,20 +877,18 @@ public class HimalayaDb extends SQLiteOpenHelper {
         Log.d("Fetching", "Storedata--------------->Start<------------");
         ArrayList<StockNewGetterSetter> list = new ArrayList<StockNewGetterSetter>();
         Cursor dbcursor = null;
-
         try {
             dbcursor = db.rawQuery("SELECT DISTINCT SD.CATEGORY_CD, SD.CATEGORY, SD.HIMALAYA_PHOTO, SD.CATEGORY_PHOTO " +
                     "FROM MAPPING_AVAILABILITY CD " +
                     "INNER JOIN SKU_MASTER SD " +
                     "ON CD.SKU_CD = SD.SKU_CD " +
                     "WHERE CD.STORE_CD ='" + store_cd + "' " +
-                    "ORDER BY SD.BRAND_SEQUENCE ", null);
+                    "ORDER BY SD.BRAND_SEQUENCE", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     StockNewGetterSetter sb = new StockNewGetterSetter();
-
                     sb.setCategory_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_CD")));
                     sb.setCategory(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY")));
                     sb.setHimalaya_camera(dbcursor.getString(dbcursor.getColumnIndexOrThrow("HIMALAYA_PHOTO")));
@@ -877,11 +914,8 @@ public class HimalayaDb extends SQLiteOpenHelper {
     public boolean isOpeningDataFilled(String storeId) {
         boolean filled = false;
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT OPENING_STOCK, OPENING_FACING " +
-                    "FROM STOCK_DATA WHERE STORE_CD= '" + storeId + "'", null);
-
+            dbcursor = db.rawQuery("SELECT OPENING_STOCK, OPENING_FACING " + "FROM STOCK_DATA WHERE STORE_CD= '" + storeId + "'", null);
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 int icount = dbcursor.getCount();
@@ -1011,10 +1045,8 @@ public class HimalayaDb extends SQLiteOpenHelper {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     AssetInsertdataGetterSetter sb = new AssetInsertdataGetterSetter();
-
                     sb.setCategory_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_CD")));
                     sb.setCategory(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY")));
-
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
@@ -1158,22 +1190,18 @@ public class HimalayaDb extends SQLiteOpenHelper {
     public boolean isMiddayDataFilled(String storeId) {
         boolean filled = false;
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT MIDDAY_STOCK FROM STOCK_DATA " +
-                    "WHERE STORE_CD= '" + storeId + "'", null);
+            dbcursor = db.rawQuery("SELECT MIDDAY_STOCK FROM STOCK_DATA WHERE STORE_CD= '" + storeId + "' AND COMPANY_CD ='" + "1" + "'", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
-
                     if (dbcursor.getString(dbcursor.getColumnIndexOrThrow("MIDDAY_STOCK")).equals("")) {
                         filled = false;
                         break;
                     } else {
                         filled = true;
                     }
-
                     dbcursor.moveToNext();
                 }
                 dbcursor.close();
@@ -1193,20 +1221,17 @@ public class HimalayaDb extends SQLiteOpenHelper {
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT CLOSING_STOCK FROM STOCK_DATA " +
-                    "WHERE STORE_CD= '" + storeId + "'", null);
+            dbcursor = db.rawQuery("SELECT CLOSING_STOCK FROM STOCK_DATA " + "WHERE STORE_CD= '" + storeId + "' AND COMPANY_CD ='" + "1" + "'", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
-
                     if (dbcursor.getString(dbcursor.getColumnIndexOrThrow("CLOSING_STOCK")).equals("")) {
                         filled = false;
                         break;
                     } else {
                         filled = true;
                     }
-
                     dbcursor.moveToNext();
                 }
                 dbcursor.close();
@@ -1221,44 +1246,46 @@ public class HimalayaDb extends SQLiteOpenHelper {
     //endregion
 
     //region Description_updateCoverageStatusNew
-    public void updateCoverageStatusNew(String store_id, String status) {
+    public long updateCoverageStatusNew(String store_id, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put(CommonString.KEY_COVERAGE_STATUS, status);
-
-            db.update(CommonString.TABLE_COVERAGE_DATA, values,
-                    CommonString.KEY_STORE_ID + "=" + store_id, null);
+            l = db.update(CommonString.TABLE_COVERAGE_DATA, values, CommonString.KEY_STORE_ID + "=" + store_id, null);
         } catch (Exception e) {
 
         }
+        return l;
     }
     //endregion
 
     //region Description_updateDeviationStoreStatusOnCheckout
-    public void updateDeviationStoreStatusOnCheckout(String storeid, String visitdate, String status) {
+    public long updateDeviationStoreStatusOnCheckout(String storeid, String visitdate, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put(CommonString.KEY_CHECKOUT_STATUS, status);
 
-            db.update("JOURNEY_DEVIATION", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
+            l = db.update("JOURNEY_DEVIATION", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
                     + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
         } catch (Exception e) {
 
         }
+        return l;
     }
     //endregion
 
     //region Description_updateStoreStatusOnCheckout
-    public void updateStoreStatusOnCheckout(String storeid, String visitdate, String status) {
+    public long updateStoreStatusOnCheckout(String storeid, String visitdate, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put(CommonString.KEY_CHECKOUT_STATUS, status);
-
-            db.update("JOURNEY_PLAN", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
-                    + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
+            l = db.update("JOURNEY_PLAN", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND " + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
         } catch (Exception e) {
 
         }
+        return l;
     }
 
     //endregion
@@ -1278,7 +1305,40 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
     }
 
+
+    public void deletePreviousUploadedData(String visit_date) {
+        Cursor dbcursor = null;
+        Cursor dbcursor1 = null;
+        try {
+            dbcursor = db.rawQuery("SELECT  * from COVERAGE_DATA where VISIT_DATE < '" + visit_date + "'", null);
+            if (dbcursor != null) {
+                dbcursor.moveToFirst();
+                int icount = dbcursor.getCount();
+                dbcursor.close();
+                if (icount > 0) {
+                    db.delete(CommonString.TABLE_COVERAGE_DATA, null, null);
+                    db.delete(CommonString.TABLE_INSERT_OPENINGHEADER_DATA, null, null);
+                    db.delete(CommonString.TABLE_STOCK_DATA, null, null);
+                    db.delete(CommonString.TABLE_INSERT_PROMOTION_HEADER_DATA, null, null);
+                    db.delete(CommonString.TABLE_PROMOTION_DATA, null, null);
+                    db.delete(CommonString.TABLE_INSERT_ASSET_HEADER_DATA, null, null);
+                    db.delete(CommonString.TABLE_ASSET_DATA, null, null);
+                    db.delete(CommonString.TABLE_ASSET_CHECKLIST_INSERT, null, null);
+                    db.delete(CommonString.TABLE_ASSET_SKU_CHECKLIST_INSERT, null, null);
+                    db.delete(CommonString.TABLE_AUDIT_DATA_SAVE, null, null);
+                }
+                dbcursor.close();
+            }
+
+        } catch (Exception e) {
+            Log.d("Exception when fetching Coverage Data!!!!!!!!!!!!!!!!!!!!!", e.toString());
+
+        }
+    }
+
+
     public long InsertCoverageData(CoverageBean data) {
+        long l = 0;
         ContentValues values = new ContentValues();
 
         try {
@@ -1297,27 +1357,27 @@ public class HimalayaDb extends SQLiteOpenHelper {
             values.put(CommonString.KEY_REASON_ID, data.getReasonid());
             values.put(CommonString.KEY_REASON, data.getReason());
             values.put(CommonString.KEY_PJP_DEVIATION, data.isPJPDeviation());
-            //values.put(CommonString.KEY_other, data.getOtherreson());
 
-            return db.insert(CommonString.TABLE_COVERAGE_DATA, null, values);
+            l = db.insert(CommonString.TABLE_COVERAGE_DATA, null, values);
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return 0;
+        return l;
     }
 
     public long InsertPJPDeviationData(String store_cd, String visit_date) {
         ContentValues values = new ContentValues();
+        long l = 0;
         try {
             values.put(CommonString.KEY_STORE_CD, store_cd);
             values.put(CommonString.KEY_VISIT_DATE, visit_date);
-            return db.insert(CommonString.TABLE_PJP_DEVIATION, null, values);
+            l = db.insert(CommonString.TABLE_PJP_DEVIATION, null, values);
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return 0;
+        return l;
     }
 
     public ArrayList<StockNewGetterSetter> getHeaderStockImageData(String store_cd, String visit_date) {
@@ -1412,7 +1472,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     "INNER JOIN BRAND_MASTER BM " +
                     "ON BM.BRAND_CD = SD.BRAND_CD " +
                     "WHERE CD.STORE_CD= '" + store_cd + "' AND SD.CATEGORY_CD ='" + categord_cd + "' " +
-                    "ORDER BY SD.SKU_SEQUENCE ", null);
+                    "ORDER BY SD.SKU_SEQUENCE", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -1481,10 +1541,10 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return false;
     }
 
-    public void UpdateHeaderOpeningStocklistData(
+    public long UpdateHeaderOpeningStocklistData(
             String storeid, String visit_date,
             List<StockNewGetterSetter> save_listDataHeader) {
-
+        long l = 0;
         ContentValues values = new ContentValues();
         try {
             db.beginTransaction();
@@ -1494,7 +1554,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                 values.put("IMAGE_CAT_ONE", save_listDataHeader.get(i).getImg_cat_one());
                 values.put("IMAGE_CAT_TWO", save_listDataHeader.get(i).getImg_cat_two());
 
-                db.update(CommonString.TABLE_STOCK_IMAGE, values, "STORE_CD" + "='" + storeid +
+                l = db.update(CommonString.TABLE_STOCK_IMAGE, values, "STORE_CD" + "='" + storeid +
                         "' AND CATEGORY_CD " + "='" + Integer.parseInt(save_listDataHeader.get(i).getCategory_cd()) +
                         "' AND VISIT_DATE  ='" + visit_date + "'", null);
             }
@@ -1503,13 +1563,14 @@ public class HimalayaDb extends SQLiteOpenHelper {
         } catch (Exception ex) {
             Log.d("Database Exception", " while Insert Posm Master Data " + ex.toString());
         }
+        return l;
     }
 
 
-    public void UpdateOpeningStocklistData(
+    public long UpdateOpeningStocklistData(
             String storeid, HashMap<StockNewGetterSetter, List<StockNewGetterSetter>> data,
             List<StockNewGetterSetter> save_listDataHeader) {
-
+        long l = 0;
         ContentValues values1 = new ContentValues();
         try {
             ArrayList<HeaderGetterSetter> list;
@@ -1523,7 +1584,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     values1.put("OPENING_FACING", data.get(save_listDataHeader.get(i)).get(j).getEd_openingFacing());
                     values1.put("STOCK_UNDER_DAYS", data.get(save_listDataHeader.get(i)).get(j).getStock_under45days());
 
-                    db.update(CommonString.TABLE_STOCK_DATA, values1,
+                    l = db.update(CommonString.TABLE_STOCK_DATA, values1,
                             "Common_Id" + "='" + Integer.parseInt(list.get(i).getKeyId()) + "' AND SKU_CD " +
                                     "='" + Integer.parseInt(data.get(save_listDataHeader.get(i)).get(j).getSku_cd()) + "'", null);
                 }
@@ -1533,6 +1594,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         } catch (Exception ex) {
             Log.d("Database Exception", " while Insert Posm Master Data " + ex.toString());
         }
+        return l;
     }
 
 
@@ -1571,7 +1633,6 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
     public void InsertHeaderOpeningStocklistData(
             String storeid, String visit_date, List<StockNewGetterSetter> save_listDataHeader) {
-
         ContentValues values = new ContentValues();
         try {
             db.beginTransaction();
@@ -1636,13 +1697,60 @@ public class HimalayaDb extends SQLiteOpenHelper {
         }
     }
 
+
+    public ArrayList<NonWorkingReasonGetterSetter> getNonWorkingDataByFlag(boolean flag) {
+        Log.d("FetchingAssetdata--------------->Start<------------",
+                "------------------");
+        ArrayList<NonWorkingReasonGetterSetter> list = new ArrayList<>();
+        Cursor dbcursor = null;
+        try {
+            dbcursor = db.rawQuery("SELECT * FROM NON_WORKING_REASON", null);
+            if (dbcursor != null) {
+                dbcursor.moveToFirst();
+                while (!dbcursor.isAfterLast()) {
+                    if (flag) {
+                        NonWorkingReasonGetterSetter sb = new NonWorkingReasonGetterSetter();
+                        String name = dbcursor.getString(dbcursor.getColumnIndexOrThrow("ENTRY_ALLOW"));
+                        if (name.equals("1")) {
+                            sb.setReason_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REASON_CD")));
+                            sb.setReason(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REASON")));
+                            sb.setEntry_allow(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ENTRY_ALLOW")));
+                            list.add(sb);
+                        }
+                    } else {
+                        NonWorkingReasonGetterSetter sb = new NonWorkingReasonGetterSetter();
+                        sb.setReason_cd(dbcursor.getString(dbcursor
+                                .getColumnIndexOrThrow("REASON_CD")));
+                        sb.setReason(dbcursor.getString(dbcursor
+                                .getColumnIndexOrThrow("REASON")));
+                        sb.setEntry_allow(dbcursor.getString(dbcursor
+                                .getColumnIndexOrThrow("ENTRY_ALLOW")));
+                        list.add(sb);
+                    }
+                    dbcursor.moveToNext();
+                }
+                dbcursor.close();
+                return list;
+            }
+
+        } catch (Exception e) {
+            Log.d("Exception when fetching Non working!!!!!!!!!!!",
+                    e.toString());
+            return list;
+        }
+
+        Log.d("Fetching non working data---------------------->Stop<-----------",
+                "-------------------");
+        return list;
+    }
+
+
+
     public ArrayList<NonWorkingReasonGetterSetter> getNonWorkingData() {
         ArrayList<NonWorkingReasonGetterSetter> list = new ArrayList<NonWorkingReasonGetterSetter>();
         Cursor dbcursor = null;
         try {
-
             dbcursor = db.rawQuery("SELECT * FROM NON_WORKING_REASON", null);
-
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
@@ -1683,14 +1791,16 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
     }
 
-    public void updateStoreStatusOnLeave(String storeid, String visitdate, String status) {
+    public long updateStoreStatusOnLeave(String storeid, String visitdate, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put("UPLOAD_STATUS", status);
-            db.update("JOURNEY_PLAN", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
+            l = db.update("JOURNEY_PLAN", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
                     + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
         } catch (Exception e) {
         }
+        return l;
     }
 
     public ArrayList<StockNewGetterSetter> getMiddayStockDataFromDatabase(String store_cd, String categord_cd) {
@@ -1706,7 +1816,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     "INNER JOIN STOCK_DATA S " +
                     "on S.SKU_CD=SD.SKU_CD " +
                     "WHERE CD.STORE_CD= '" + store_cd + "' AND SD.CATEGORY_CD ='" + categord_cd + "' " +
-                    "ORDER BY SD.SKU_SEQUENCE", null);
+                    "  AND S.COMPANY_CD = '1' ORDER BY SD.SKU_SEQUENCE", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -1776,11 +1886,11 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return list;
     }
 
-    public void UpdateMiddayStocklistData(String storeid,
+    public long UpdateMiddayStocklistData(String storeid,
                                           HashMap<StockNewGetterSetter, List<StockNewGetterSetter>> data,
                                           List<StockNewGetterSetter> save_listDataHeader) {
         ContentValues values1 = new ContentValues();
-
+        long l = 0;
         try {
             ArrayList<HeaderGetterSetter> list = new ArrayList<HeaderGetterSetter>();
             list = getHeaderStock(storeid);
@@ -1790,14 +1900,15 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
                     values1.put("MIDDAY_STOCK", data.get(save_listDataHeader.get(i)).get(j).getEd_midFacing());
 
-                    db.update(CommonString.TABLE_STOCK_DATA, values1,
-                            "Common_Id" + "='" + Integer.parseInt(list.get(i).getKeyId()) + "' AND SKU_CD " + "='"
+                    l = db.update(CommonString.TABLE_STOCK_DATA, values1,
+                            " Common_Id ='" + Integer.parseInt(list.get(i).getKeyId()) + "' AND SKU_CD ='"
                                     + Integer.parseInt(data.get(save_listDataHeader.get(i)).get(j).getSku_cd()) + "'", null);
                 }
             }
         } catch (Exception ex) {
             Log.d("Database ", "Exception while Insert Posm Master Data " + ex.toString());
         }
+        return l;
     }
 
     public ArrayList<StockNewGetterSetter> getClosingStockDataFromDatabase(String store_cd, String category_cd) {
@@ -1813,7 +1924,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     "INNER JOIN STOCK_DATA S " +
                     "on S.SKU_CD=SD.SKU_CD " +
                     "WHERE CD.STORE_CD= '" + store_cd + "' AND SD.CATEGORY_CD ='" + category_cd + "' " +
-                    "ORDER BY SD.SKU_SEQUENCE", null);
+                    "AND S.COMPANY_CD = '1' ORDER BY SD.SKU_SEQUENCE", null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -1892,24 +2003,23 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return list;
     }
 
-    public void UpdateClosingStocklistData(String storeid,
+    public long UpdateClosingStocklistData(String storeid,
                                            HashMap<StockNewGetterSetter, List<StockNewGetterSetter>> data,
                                            List<StockNewGetterSetter> save_listDataHeader) {
 
         ContentValues values1 = new ContentValues();
-
+        long l = 0;
         try {
             ArrayList<HeaderGetterSetter> list = new ArrayList<>();
             list = getHeaderStock(storeid);
-
             db.beginTransaction();
             for (int i = 0; i < list.size(); i++) {
                 for (int j = 0; j < data.get(save_listDataHeader.get(i)).size(); j++) {
                     values1.put("CLOSING_STOCK", data.get(save_listDataHeader.get(i)).get(j).getEd_closingFacing());
 
-                    db.update(CommonString.TABLE_STOCK_DATA, values1,
-                            "Common_Id" + "='" + Integer.parseInt(list.get(i).getKeyId())
-                                    + "' AND SKU_CD " + "='" + Integer.parseInt(data.get(save_listDataHeader.get(i)).get(j).getSku_cd())
+                    l = db.update(CommonString.TABLE_STOCK_DATA, values1,
+                            " Common_Id ='" + Integer.parseInt(list.get(i).getKeyId())
+                                    + "' AND SKU_CD ='" + Integer.parseInt(data.get(save_listDataHeader.get(i)).get(j).getSku_cd())
                                     + "'", null);
                 }
             }
@@ -1918,6 +2028,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         } catch (Exception ex) {
             Log.d("Database", " Exception while Insert Posm Master Data " + ex.toString());
         }
+        return l;
     }
 
     public ArrayList<PromotionInsertDataGetterSetter> getPromotionDataFromDatabase(String storeId, String brand_cd) {
@@ -2061,8 +2172,10 @@ public class HimalayaDb extends SQLiteOpenHelper {
         }
     }
 
-    public void saveAuditQuestionAnswerData(ArrayList<Audit_QuestionDataGetterSetter> questionAnswerList, String store_cd, String category_cd) {
-        db.delete(CommonString.TABLE_AUDIT_DATA_SAVE, "STORE_CD" + "='" + store_cd + "' AND CATEGORY_ID ='" + category_cd + "'", null);
+    public void saveAuditQuestionAnswerData(ArrayList<Audit_QuestionDataGetterSetter> questionAnswerList,
+                                            String store_cd, String category_cd) {
+        db.delete(CommonString.TABLE_AUDIT_DATA_SAVE, "STORE_CD" + "='" + store_cd + "' AND CATEGORY_ID ='"
+                + category_cd + "'", null);
 
         ContentValues values = new ContentValues();
         try {
@@ -2084,10 +2197,8 @@ public class HimalayaDb extends SQLiteOpenHelper {
     }
 
     public ArrayList<Audit_QuestionDataGetterSetter> getAfterSaveAuditQuestionAnswerData(String store_cd, String category_id) {
-
         ArrayList<Audit_QuestionDataGetterSetter> list = new ArrayList<>();
         Cursor dbcursor = null;
-
         try {
             dbcursor = db.rawQuery("Select * " + "From " + CommonString.TABLE_AUDIT_DATA_SAVE
                     + " where STORE_CD='" + store_cd + "' AND CATEGORY_ID ='" + category_id + "'", null);
@@ -2115,6 +2226,43 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
         return list;
     }
+
+
+
+    public AllDatabaseTableQueryGetterSetter getAfterSaveAuditQuestionAnswerDataWithoutCategory
+            (String store_cd) {
+        ArrayList<Audit_QuestionDataGetterSetter> list = new ArrayList<>();
+        AllDatabaseTableQueryGetterSetter allDatabaseT=new AllDatabaseTableQueryGetterSetter();
+        Cursor dbcursor = null;
+        try {
+            String query="Select * " + "FROM " + CommonString.TABLE_AUDIT_DATA_SAVE + " WHERE STORE_CD='" + store_cd +  "'";
+            dbcursor = db.rawQuery(query, null);
+
+            if (dbcursor != null) {
+                dbcursor.moveToFirst();
+                while (!dbcursor.isAfterLast()) {
+                    Audit_QuestionDataGetterSetter sb = new Audit_QuestionDataGetterSetter();
+
+                    sb.setQuestion_id(dbcursor.getString(dbcursor.getColumnIndexOrThrow("QUESTION_ID")));
+                    sb.setSp_answer_id(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ANSWER_ID")));
+                    sb.setCategory_id(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_ID")));
+
+                    list.add(sb);
+                    dbcursor.moveToNext();
+                }
+                allDatabaseT.setSql_query(query);
+                allDatabaseT.setDatalist(list);
+                dbcursor.close();
+                return allDatabaseT;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return allDatabaseT;
+        }
+
+        return allDatabaseT;
+    }
+
 
     public ArrayList<Audit_QuestionDataGetterSetter> getAuditAnswerData(String store_cd, String question_id) {
         Log.d("Fetching", "Storedata--------------->Start<------------");
@@ -2157,10 +2305,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         ArrayList<MappingAssetChecklistGetterSetter> list = new ArrayList<>();
         Cursor dbcursor = null;
         try {
-            dbcursor = db
-                    .rawQuery(
-                            "SELECT * FROM MAPPING_ASSET_CHECKLIST"
-                            , null);
+            dbcursor = db.rawQuery("SELECT * FROM MAPPING_ASSET_CHECKLIST", null);
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
@@ -2187,7 +2332,8 @@ public class HimalayaDb extends SQLiteOpenHelper {
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT SD._id,SD.ASSET_CD, SD.ASSET, SD.PRESENT, SD.REMARK, SD.IMAGE, SD.PLANOGRAM_IMG,CD.CATEGORY_CD, CD.CATEGORY " +
+            dbcursor = db.rawQuery("SELECT SD.id,SD.ASSET_CD, SD.ASSET, " +
+                    "SD.PRESENT, SD.REMARK, SD.IMAGE, SD.PLANOGRAM_IMG,CD.CATEGORY_CD, CD.CATEGORY " +
                     "FROM openingHeader_Asset_data CD " +
                     "INNER JOIN ASSET_DATA SD " +
                     "ON CD.KEY_ID=SD.Common_Id " +
@@ -2197,16 +2343,14 @@ public class HimalayaDb extends SQLiteOpenHelper {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     AssetInsertdataGetterSetter sb = new AssetInsertdataGetterSetter();
-
-                    sb.setKey_id(dbcursor.getString(dbcursor.getColumnIndexOrThrow("_id")));
+                    sb.setKey_id(dbcursor.getString(dbcursor.getColumnIndexOrThrow("id")));
                     sb.setAsset_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ASSET_CD")));
                     sb.setAsset(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ASSET")));
                     sb.setPresent(dbcursor.getString(dbcursor.getColumnIndexOrThrow("PRESENT")));
-                    sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REMARK")));
+                   sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REMARK")));
                     sb.setImg(dbcursor.getString(dbcursor.getColumnIndexOrThrow("IMAGE")));
                     sb.setPlanogram_img(dbcursor.getString(dbcursor.getColumnIndexOrThrow("PLANOGRAM_IMG")));
                     sb.setCategory_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_CD")));
-
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
@@ -2304,8 +2448,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT * FROM ASSET_CHECKLIST_DATA " +
-                    "WHERE COMMONID = '" + key_id + "'", null);
+            dbcursor = db.rawQuery("SELECT * FROM ASSET_CHECKLIST_DATA " + "WHERE COMMONID = '" + key_id + "'", null);
 
 
             if (dbcursor != null) {
@@ -2382,11 +2525,13 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return list;
     }
 
-    public void InsertAssetData(String storeid, HashMap<AssetInsertdataGetterSetter, List<AssetInsertdataGetterSetter>> data,
+    public long InsertAssetData(String storeid, HashMap<AssetInsertdataGetterSetter,
+            List<AssetInsertdataGetterSetter>> data,
                                 List<AssetInsertdataGetterSetter> save_listDataHeader, String visit_date) {
         ContentValues values = new ContentValues();
         ContentValues values1 = new ContentValues();
         ContentValues values4 = new ContentValues();
+        long l3=0;
 
         try {
             db.beginTransaction();
@@ -2409,7 +2554,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     values1.put("PLANOGRAM_IMG", data.get(save_listDataHeader.get(i)).get(j).getPlanogram_img());
                     values1.put("IMAGE", data.get(save_listDataHeader.get(i)).get(j).getImg());
 
-                    long m = db.insert(CommonString.TABLE_ASSET_DATA, null, values1);
+                   long m = db.insert(CommonString.TABLE_ASSET_DATA, null, values1);
 
                     for (int k = 0; k < (data.get(save_listDataHeader.get(i)).get(j).getChecklist()).size(); k++) {
                         ChecklistInsertDataGetterSetter data1 = (data.get(save_listDataHeader.get(i)).get(j).getChecklist()).get(k);
@@ -2421,7 +2566,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
                         values4.put("CHECK_LIST_TYPE", data1.getChecklist_type());
                         values4.put("REASON_ID", data1.getReason_cd());
 
-                        db.insert(CommonString.TABLE_ASSET_CHECKLIST_DATA, null, values4);
+                        l3=    db.insert(CommonString.TABLE_ASSET_CHECKLIST_DATA, null, values4);
                     }
                 }
             }
@@ -2430,6 +2575,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         } catch (Exception ex) {
             Log.d("Database Exception ", "while Insert Posm Master Data " + ex.toString());
         }
+        return l3;
     }
 
     public ArrayList<ChecklistInsertDataGetterSetter> getCheckListData(String asset_cd) {
@@ -2468,12 +2614,12 @@ public class HimalayaDb extends SQLiteOpenHelper {
     }
 
     public ArrayList<AssetChecklistReasonGettersetter> getAssetCheckListReasonData(String checklist_id) {
-
         ArrayList<AssetChecklistReasonGettersetter> list = new ArrayList<>();
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT N.CREASON, N.CREASON_ID FROM MAPPING_ASSET_CHECKLIST_REASON M JOIN NON_COMPLIANCE_CHECKLIST N ON M.CREASON_ID = N.CREASON_ID WHERE CHECKLIST_ID = '" + checklist_id + "'"
+            dbcursor = db.rawQuery("SELECT N.CREASON, N.CREASON_ID " +
+                            "FROM MAPPING_ASSET_CHECKLIST_REASON M JOIN NON_COMPLIANCE_CHECKLIST N " +
+                            "ON M.CREASON_ID = N.CREASON_ID WHERE CHECKLIST_ID = '" + checklist_id + "'"
                     , null);
 
             if (dbcursor != null) {
@@ -2609,19 +2755,11 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
             if (dbcursor != null) {
                 int numrows = dbcursor.getCount();
-
                 dbcursor.moveToFirst();
                 for (int i = 0; i < numrows; i++) {
-
-                    sb.setStore_cd(dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow(CommonString.KEY_STORE_CD)));
-
-                    sb.setCheckOutStatus((dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow("CHECKOUT_STATUS"))));
-
-                    sb.setUploadStatus(dbcursor.getString(dbcursor
-                            .getColumnIndexOrThrow("UPLOAD_STATUS")));
-
+                    sb.setStore_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_STORE_CD)));
+                    sb.setCheckOutStatus((dbcursor.getString(dbcursor.getColumnIndexOrThrow("CHECKOUT_STATUS"))));
+                    sb.setUploadStatus(dbcursor.getString(dbcursor.getColumnIndexOrThrow("UPLOAD_STATUS")));
                     dbcursor.moveToNext();
 
                 }
@@ -2634,21 +2772,19 @@ public class HimalayaDb extends SQLiteOpenHelper {
             e.printStackTrace();
         }
         return sb;
-
     }
 
-    public ArrayList<JCPGetterSetter> getPJPDeviationStoreData(String  visit_date) {
+    public ArrayList<JCPGetterSetter> getPJPDeviationStoreData() {
         ArrayList<JCPGetterSetter> list = new ArrayList<>();
         Cursor dbcursor = null;
-
         try {
-            dbcursor = db.rawQuery("SELECT * from PJP_DEVIATION WHERE VISIT_DATE= '" + visit_date + "'", null);
+            dbcursor = db.rawQuery("SELECT * FROM PJP_DEVIATION", null);
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     JCPGetterSetter fc = new JCPGetterSetter();
-                    fc.setStoreid(dbcursor.getString(dbcursor.getColumnIndexOrThrow("STORE_CD")));
-                    fc.setVisitdate(dbcursor.getString(dbcursor.getColumnIndexOrThrow("VISIT_DATE")));
+                    fc.setStoreid(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_STORE_CD)));
+                    fc.setVisitdate(dbcursor.getString(dbcursor.getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE)));
                     list.add(fc);
                     dbcursor.moveToNext();
                 }
@@ -2664,50 +2800,48 @@ public class HimalayaDb extends SQLiteOpenHelper {
 
     }
 
-    public void deletePJPDeviationStores() {
-
-        db.delete(CommonString.TABLE_PJP_DEVIATION, null, null);
+    public long deletePJPDeviationStores() {
+        long l = 0;
+        l = db.delete(CommonString.TABLE_PJP_DEVIATION, null, null);
+        return l;
     }
 
-    public void updateCoverageStatus(int mid, String status) {
-
+    public long updateCoverageStatus(int mid, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put(CommonString.KEY_COVERAGE_STATUS, status);
-
-            db.update(CommonString.TABLE_COVERAGE_DATA, values,
+            l = db.update(CommonString.TABLE_COVERAGE_DATA, values,
                     CommonString.KEY_ID + "=" + mid, null);
         } catch (Exception e) {
 
         }
+        return l;
     }
 
-    public ArrayList<StockNewGetterSetter> getOpeningStockUpload(String storeId) {
+    public AllDatabaseTableQueryGetterSetter getOpeningStockUpload(String storeId) {
         ArrayList<StockNewGetterSetter> list = new ArrayList<>();
+        AllDatabaseTableQueryGetterSetter allDatabaseT=new AllDatabaseTableQueryGetterSetter();
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT * FROM " + CommonString.TABLE_STOCK_DATA +
-                    " WHERE STORE_CD= '" + storeId + "'", null);
-
+            String query="SELECT * FROM " + CommonString.TABLE_STOCK_DATA + " WHERE STORE_CD= '" + storeId + "'";
+            dbcursor = db.rawQuery(query , null);
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     StockNewGetterSetter sb = new StockNewGetterSetter();
-
                     sb.setStore_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("STORE_CD")));
                     sb.setCategory_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_CD")));
                     sb.setSku_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("SKU_CD")));
                     sb.setEd_openingStock(dbcursor.getString(dbcursor.getColumnIndexOrThrow("OPENING_STOCK")));
                     sb.setEd_openingFacing(dbcursor.getString(dbcursor.getColumnIndexOrThrow("OPENING_FACING")));
-
                     String midday_stock = dbcursor.getString(dbcursor.getColumnIndexOrThrow("MIDDAY_STOCK"));
                     if (midday_stock == null || midday_stock.equals("")) {
                         sb.setEd_midFacing("0");
                     } else {
                         sb.setEd_midFacing(midday_stock);
                     }
-
                     String closing_stock = dbcursor.getString(dbcursor.getColumnIndexOrThrow("CLOSING_STOCK"));
                     if (closing_stock == null || closing_stock.equals("")) {
                         sb.setEd_closingFacing("0");
@@ -2717,25 +2851,29 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
+                allDatabaseT.setSql_query(query);
+                allDatabaseT.setDatalist(list);
                 dbcursor.close();
-                return list;
+                return allDatabaseT;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return list;
+            return allDatabaseT;
         }
-        return list;
+        return allDatabaseT;
     }
 
-    public ArrayList<StockNewGetterSetter> getStockImageUploadData(String store_cd) {
+    public AllDatabaseTableQueryGetterSetter getStockImageUploadData(String store_cd) {
         ArrayList<StockNewGetterSetter> list = new ArrayList<>();
+        AllDatabaseTableQueryGetterSetter allDatabaseT=new AllDatabaseTableQueryGetterSetter();
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT DISTINCT CATEGORY_CD, CATEGORY, IMAGE_STK, IMAGE_CAT_ONE, IMAGE_CAT_TWO," +
+            String  query="SELECT DISTINCT CATEGORY_CD, CATEGORY, IMAGE_STK, IMAGE_CAT_ONE, IMAGE_CAT_TWO," +
                     "HIMALAYA_PHOTO, CATEGORY_PHOTO  " +
                     "FROM STOCK_IMAGE " +
-                    "WHERE STORE_CD ='" + store_cd + "'", null);
+                    "WHERE STORE_CD ='" + store_cd + "'";
+            dbcursor = db.rawQuery(query, null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -2749,32 +2887,35 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     sb.setImg_cat_two(dbcursor.getString(dbcursor.getColumnIndexOrThrow("IMAGE_CAT_TWO")));
                     sb.setHimalaya_camera(dbcursor.getString(dbcursor.getColumnIndexOrThrow("HIMALAYA_PHOTO")));
                     sb.setCategory_camera(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CATEGORY_PHOTO")));
-
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
+                allDatabaseT.setSql_query(query);
+                allDatabaseT.setDatalist(list);
                 dbcursor.close();
-                return list;
+                return allDatabaseT;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return list;
+            return allDatabaseT;
         }
-        return list;
+        return allDatabaseT;
     }
 
 
-    public ArrayList<PromotionInsertDataGetterSetter> getPromotionUploadData(String storeId) {
+    public AllDatabaseTableQueryGetterSetter getPromotionUploadData(String storeId) {
         ArrayList<PromotionInsertDataGetterSetter> list = new ArrayList<>();
+        AllDatabaseTableQueryGetterSetter allDatabaseT=new AllDatabaseTableQueryGetterSetter();
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT SD.PID, SD.IMAGE, SD.PROMOTION,SD.PRESENT,SD.REMARK, CD.BRAND_CD,CD.BRAND," +
+            String query="SELECT SD.PID, SD.IMAGE, SD.PROMOTION,SD.PRESENT,SD.REMARK, CD.BRAND_CD,CD.BRAND," +
                     "SD.CAMERA,SD.PROMO_STOCK,SD.PROMO_TALKER,SD.RUNNING_POS " +
                     "FROM openingHeader_Promotion_data CD " +
                     "INNER JOIN PROMOTION_DATA SD " +
                     "ON CD.KEY_ID=SD.Common_Id " +
-                    "WHERE CD.STORE_CD= '" + storeId + "'", null);
+                    "WHERE CD.STORE_CD= '" + storeId + "'";
+            dbcursor = db.rawQuery(query, null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
@@ -2788,7 +2929,6 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REMARK")));
                     sb.setBrand_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("BRAND_CD")));
                     sb.setBrand(dbcursor.getString(dbcursor.getColumnIndexOrThrow("BRAND")));
-
                     sb.setCamera(dbcursor.getString(dbcursor.getColumnIndexOrThrow("CAMERA")));
                     sb.setPromoStock(dbcursor.getString(dbcursor.getColumnIndexOrThrow("PROMO_STOCK")));
                     sb.setPromoTalker(dbcursor.getString(dbcursor.getColumnIndexOrThrow("PROMO_TALKER")));
@@ -2797,34 +2937,38 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
+                allDatabaseT.setSql_query(query);
+                allDatabaseT.setDatalist(list);
                 dbcursor.close();
-                return list;
+                return allDatabaseT;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return list;
+            return allDatabaseT;
         }
 
-        return list;
+        return allDatabaseT;
     }
 
-    public ArrayList<AssetInsertdataGetterSetter> getAssetUploadData(String storeId) {
+    public AllDatabaseTableQueryGetterSetter getAssetUploadData(String storeId) {
         Log.d("Fetching", "Assetuploaddata--------------->Start<------------");
         ArrayList<AssetInsertdataGetterSetter> list = new ArrayList<AssetInsertdataGetterSetter>();
+        AllDatabaseTableQueryGetterSetter allDatabaseT=new AllDatabaseTableQueryGetterSetter();
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT  CD.KEY_ID, SD.ASSET_CD, SD.ASSET, SD.PRESENT, SD.REMARK, SD.IMAGE, CD.CATEGORY_CD, CD.CATEGORY " +
+            String query="SELECT  CD.KEY_ID, SD.ASSET_CD, SD.ASSET, SD.PRESENT, " +
+                    "SD.REMARK, SD.IMAGE, CD.CATEGORY_CD, CD.CATEGORY " +
                     "FROM openingHeader_Asset_data CD " +
                     "INNER JOIN ASSET_DATA SD " +
                     "ON CD.KEY_ID=SD.Common_Id " +
-                    "WHERE CD.STORE_CD= '" + storeId + "'", null);
+                    "WHERE CD.STORE_CD= '" + storeId + "'";
+            dbcursor = db.rawQuery(query, null);
 
             if (dbcursor != null) {
                 dbcursor.moveToFirst();
                 while (!dbcursor.isAfterLast()) {
                     AssetInsertdataGetterSetter sb = new AssetInsertdataGetterSetter();
-
                     sb.setAsset_cd(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ASSET_CD")));
                     sb.setAsset(dbcursor.getString(dbcursor.getColumnIndexOrThrow("ASSET")));
                     sb.setRemark(dbcursor.getString(dbcursor.getColumnIndexOrThrow("REMARK")));
@@ -2842,14 +2986,16 @@ public class HimalayaDb extends SQLiteOpenHelper {
                     list.add(sb);
                     dbcursor.moveToNext();
                 }
+                allDatabaseT.setSql_query(query);
+                allDatabaseT.setDatalist(list);
                 dbcursor.close();
-                return list;
+                return allDatabaseT;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return list;
+            return allDatabaseT;
         }
-        return list;
+        return allDatabaseT;
     }
 
 
@@ -2858,8 +3004,7 @@ public class HimalayaDb extends SQLiteOpenHelper {
         Cursor dbcursor = null;
 
         try {
-            dbcursor = db.rawQuery("SELECT * FROM ASSET_CHECKLIST_DATA " +
-                    "WHERE COMMONID = '" + key_id + "'", null);
+            dbcursor = db.rawQuery("SELECT * FROM ASSET_CHECKLIST_DATA " + "WHERE COMMONID = '" + key_id + "'", null);
 
 
             if (dbcursor != null) {
@@ -2893,15 +3038,17 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return list;
     }
 
-    public void updatePJPStoreStatus(String storeid, String visitdate, String status) {
+    public long updatePJPStoreStatus(String storeid, String visitdate, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put("UPLOAD_STATUS", status);
 
-            db.update("JOURNEY_DEVIATION", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
+            l = db.update("JOURNEY_DEVIATION", values, CommonString.KEY_STORE_CD + "='" + storeid + "' AND "
                     + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'", null);
         } catch (Exception e) {
         }
+        return l;
     }
 
     public ArrayList<AssetInsertdataGetterSetter> getAssetUpload(String storeId) {
@@ -3189,44 +3336,67 @@ public class HimalayaDb extends SQLiteOpenHelper {
         return list;
     }
 
-    public void updateCoverageStoreOutTime(String StoreId, String VisitDate, String outtime, String status) {
+    public long updateCoverageStoreOutTime(String StoreId, String VisitDate, String outtime, String status) {
+        long l = 0;
         try {
             ContentValues values = new ContentValues();
             values.put(CommonString.KEY_OUT_TIME, outtime);
             values.put(CommonString.KEY_COVERAGE_STATUS, status);
 
-            db.update(CommonString.TABLE_COVERAGE_DATA, values, CommonString.KEY_STORE_ID + "='" + StoreId + "' AND "
+            l = db.update(CommonString.TABLE_COVERAGE_DATA, values, CommonString.KEY_STORE_ID + "='" + StoreId + "' AND "
                     + CommonString.KEY_VISIT_DATE + "='" + VisitDate + "'", null);
         } catch (Exception e) {
             System.out.println(e.toString());
         }
+        return l;
     }
 
-    public String getVisiteDateFromCoverage(String storeid) {
 
+
+
+
+    //get all data QUERY
+/*
+    public ArrayList<AllDatabaseTableQueryGetterSetter> getAllDatabaseTableQUERY(String visitdate,String storeId) {
+        ArrayList<AllDatabaseTableQueryGetterSetter> list = new ArrayList<>();
         Cursor dbcursor = null;
-        String visite_date = "";
         try {
-            dbcursor = db.rawQuery("SELECT * from "
-                    + CommonString.TABLE_COVERAGE_DATA + " WHERE "
-                    + CommonString.KEY_STORE_ID + " ='" + storeid
-                    + "'", null);
+            String coveragequery="SELECT  * FROM " + CommonString.TABLE_COVERAGE_DATA + " WHERE " + CommonString.KEY_VISIT_DATE + "='" + visitdate + "'";
+            String stockquery = "SELECT * FROM " + CommonString.TABLE_STOCK_DATA + " WHERE STORE_CD= '" + storeId + "'";
+            String stockIMGquery ="SELECT DISTINCT CATEGORY_CD, CATEGORY, IMAGE_STK, IMAGE_CAT_ONE, IMAGE_CAT_TWO, HIMALAYA_PHOTO, CATEGORY_PHOTO FROM STOCK_IMAGE WHERE STORE_CD ='" + storeId + "'";
+            String promotionQ ="SELECT SD.PID, SD.IMAGE, SD.PROMOTION,SD.PRESENT,SD.REMARK, CD.BRAND_CD,CD.BRAND,SD.CAMERA,SD.PROMO_STOCK,SD.PROMO_TALKER,SD.RUNNING_POS FROM openingHeader_Promotion_data CD INNER JOIN PROMOTION_DATA SD "
+                    + "ON CD.KEY_ID=SD.Common_Id WHERE CD.STORE_CD= '" + storeId + "'";
+            String assetquery = "SELECT  CD.KEY_ID, SD.ASSET_CD, SD.ASSET, SD.PRESENT, " +
+                    "SD.REMARK, SD.IMAGE, CD.CATEGORY_CD, CD.CATEGORY " +
+                    "FROM openingHeader_Asset_data CD " +
+                    "INNER JOIN ASSET_DATA SD " +
+                    "ON CD.KEY_ID=SD.Common_Id " +
+                    "WHERE CD.STORE_CD= '" + storeId + "'";
 
-            if (dbcursor != null) {
-                dbcursor.moveToFirst();
+            String auditQ = "Select * " + "FROM " + CommonString.TABLE_AUDIT_DATA_SAVE + " WHERE STORE_CD='" + storeId +  "'";
 
-                visite_date = dbcursor.getString(dbcursor
-                        .getColumnIndexOrThrow(CommonString.KEY_VISIT_DATE));
 
-                dbcursor.close();
+            AllDatabaseTableQueryGetterSetter sb=new AllDatabaseTableQueryGetterSetter();
+            sb.setCoverage_query(coveragequery);
+            sb.setStock_query(stockquery);
+            sb.setStockIMAGES_query(stockIMGquery);
+            sb.setPromotion_query(promotionQ);
+            sb.setAsset_query(assetquery);
+            sb.setAudit_query(auditQ);
+            list.add(sb);
 
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+       } catch (Exception e) {
+            Log.d("Exception ", "when fetching Coverage Data!!!!!!!!!!!!!!!!!!!!!" + e.toString());
         }
-        return visite_date;
+
+        return list;
     }
+*/
+
+
+
+
+
 
 
 }

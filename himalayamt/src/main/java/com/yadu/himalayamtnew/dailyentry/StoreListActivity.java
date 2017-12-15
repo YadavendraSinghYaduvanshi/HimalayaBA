@@ -60,7 +60,7 @@ import java.util.ArrayList;
 
 import static com.yadu.himalayamtnew.constants.CommonFunctions.getCurrentTime;
 
-public class StoreListActivity extends AppCompatActivity implements LocationListener {
+public class StoreListActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     LinearLayout parent_linear, nodata_linear;
     FloatingActionButton fab_button;
@@ -68,14 +68,12 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
     String user_type;
     SharedPreferences preferences;
     private SharedPreferences.Editor editor = null;
-    String date, store_intime, username;
+    String date, username;
     ArrayList<CoverageBean> coverage;
     boolean flag_deviation = false;
     ArrayList<JourneyPlanGetterSetter> jcplist;
     RecyclerAdapter adapter;
     Context context;
-    public static String currLatitude = "0.0";
-    public static String currLongitude = "0.0";
     boolean result_flag = false;
     private Dialog dialog;
     private ProgressBar pb;
@@ -85,10 +83,6 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
     String str;
     JourneyPlanGetterSetter jcpgettersetter;
     boolean ResultFlag = true;
-    //jeevan
-    File saveDir = null;
-    private final static int CAMERA_RQ = 6969;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -394,7 +388,21 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
                 holder.img.setBackgroundResource(R.drawable.tick_u);
                 holder.checkout.setVisibility(View.INVISIBLE);
 
-            } else if (coveragespecific.size() > 0 && coveragespecific.get(0).getStatus().equalsIgnoreCase(CommonString.STORE_STATUS_LEAVE)) {
+            }
+           else if (jcplist.get(position).getUploadStatus().get(0).equals(CommonString.KEY_D)) {
+                holder.img.setVisibility(View.VISIBLE);
+                holder.img.setBackgroundResource(R.drawable.tick_d);
+                holder.checkout.setVisibility(View.INVISIBLE);
+
+            }
+            else if (jcplist.get(position).getUploadStatus().get(0).equals(CommonString.KEY_P)) {
+                holder.img.setVisibility(View.VISIBLE);
+                holder.img.setBackgroundResource(R.drawable.tick_p);
+                holder.checkout.setVisibility(View.INVISIBLE);
+
+            }
+            else if (coveragespecific.size() > 0 &&
+                    coveragespecific.get(0).getStatus().equalsIgnoreCase(CommonString.STORE_STATUS_LEAVE)) {
                 holder.img.setBackgroundResource(R.drawable.leave_tick);
                 holder.checkout.setVisibility(View.INVISIBLE);
 
@@ -419,7 +427,8 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
                 holder.checkinclose.setEnabled(false);
                 holder.checkinclose.setVisibility(View.INVISIBLE);
             }
-            holder.storename.setText(jcplist.get(position).getStore_name().get(0));
+            holder.storename.setText(jcplist.get(position).getStore_name().get(0) +"  "+ "(ID : "+jcplist.get(position).
+                    getStore_cd().get(0)+ ")");
             holder.city.setText(jcplist.get(position).getCity().get(0));
             holder.keyaccount.setText(jcplist.get(position).getKey_account().get(0));
 
@@ -434,17 +443,12 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
                                 public void onClick(
                                         DialogInterface dialog, int id) {
                                     if (CommonFunctions.CheckNetAvailability(context)) {
-                                        editor = preferences.edit();
-                                        editor.putString(CommonString.KEY_STORE_CD,
-                                                jcplist.get(position).getStore_cd().get(0));
-                                        editor.putString(CommonString.KEY_STORE_NAME,
-                                                jcplist.get(position).getStore_name().get(0));
-                                        editor.commit();
                                         Intent i = new Intent(context, CheckOutStoreActivity.class);
                                         i.putExtra(CommonString.KEY_PJP_DEVIATION, flag_deviation);
+                                        i.putExtra(CommonString.KEY_STORE_CD, jcplist.get(position).getStore_cd().get(0));
                                         startActivity(i);
                                     } else {
-                                        AlertandMessages.showSnackbarMsg(context, "No Network");
+                                        AlertandMessages.showSnackbarMsg(context, "No internet connection ");
                                     }
 
                                 }
@@ -497,7 +501,6 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
 
 
     void setListData(int position) {
-
         final String store_cd = jcplist.get(position).getStore_cd().get(0);
         final String upload_status = jcplist.get(position).getUploadStatus().get(0);
         final String checkoutstatus = jcplist.get(position).getCheckOutStatus().get(0);
@@ -505,7 +508,16 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
         if (upload_status.equals(CommonString.KEY_U)) {
             AlertandMessages.showSnackbarMsg(context, "All Data Uploaded");
 
-        } else if (((checkoutstatus.equals(CommonString.KEY_C)))) {
+        }
+       else if (upload_status.equals(CommonString.KEY_D)) {
+            AlertandMessages.showSnackbarMsg(context, "Data Uploaded");
+
+        }
+       else if (upload_status.equals(CommonString.KEY_P)) {
+            AlertandMessages.showSnackbarMsg(context, "Data Parsing Error. Please try again");
+
+        }
+        else if (checkoutstatus.equals(CommonString.KEY_C)) {
             AlertandMessages.showSnackbarMsg(context, "Store already checked out");
 
         } else if (isStoreCoverageLeave(store_cd)) {
@@ -631,43 +643,18 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
         dialog.setContentView(R.layout.dialogbox);
 
         RadioGroup radioGroup = (RadioGroup) dialog.findViewById(R.id.radiogrpvisit);
-
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 // find which radio button is selected
                 if (checkedId == R.id.yes) {
-
                     SharedPreferences.Editor editor = preferences.edit();
                     editor.putString(CommonString.KEY_STOREVISITED, storeCd);
                     editor.putString(CommonString.KEY_STOREVISITED_STATUS, "Yes");
-                    editor.putString(CommonString.KEY_LATITUDE, currLatitude);
-                    editor.putString(CommonString.KEY_LONGITUDE, currLongitude);
                     editor.putString(CommonString.KEY_STORE_NAME, storeName);
                     editor.putString(CommonString.KEY_STORE_CD, storeCd);
-
-                    if (!visitDate.equals("")) {
-                        editor.putString(CommonString.KEY_VISIT_DATE, visitDate);
-                    }
-
-                    if (status.equals("Yes")) {
-                        editor.putString(CommonString.KEY_STOREVISITED_STATUS, "Yes");
-                    }
-
-                    //database.updateStoreStatusOnCheckout(storeCd, date, CommonString.KEY_INVALID);
-
                     editor.commit();
-
-                    if (store_intime.equalsIgnoreCase("")) {
-                        editor = preferences.edit();
-                        editor.putString(CommonString.KEY_STORE_IN_TIME, getCurrentTime());
-                        editor.putString(CommonString.KEY_STOREVISITED_STATUS, "Yes");
-                        //editor.putString(CommonString.KEY_STOREVISITED, store_id);
-                        editor.commit();
-                    }
                     dialog.cancel();
-
-
                     boolean flag = true;
 
                     if (coverage.size() > 0) {
@@ -692,24 +679,21 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
 
                 } else if (checkedId == R.id.no) {
                     dialog.cancel();
-                    if (checkout_status.equals(CommonString.KEY_INVALID) || checkout_status.equals(CommonString.KEY_VALID)) {
+                    ArrayList<CoverageBean>specific_data;
+                    specific_data=database.getCoverageSpecificData(storeCd);
+                    if (specific_data.size()>0 && specific_data.get(0).getStatus().equalsIgnoreCase(CommonString.KEY_INVALID) ||
+                            specific_data.size()>0 &&  specific_data.get(0).getStatus().equalsIgnoreCase(CommonString.KEY_VALID)) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
                         builder.setMessage(CommonString.DATA_DELETE_ALERT_MESSAGE)
                                 .setCancelable(false)
                                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
-
                                         UpdateData(storeCd);
-
                                         SharedPreferences.Editor editor = preferences.edit();
                                         editor.putString(CommonString.KEY_STORE_CD, storeCd);
-                                        editor.putString(CommonString.KEY_STORE_IN_TIME, "");
                                         editor.putString(CommonString.KEY_STOREVISITED, "");
                                         editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
-                                        editor.putString(CommonString.KEY_LATITUDE, "");
-                                        editor.putString(CommonString.KEY_LONGITUDE, "");
                                         editor.commit();
-
                                         Intent in = new Intent(context, NonWorkingReason.class);
                                         in.putExtra(CommonString.KEY_PJP_DEVIATION, flag_deviation);
                                         startActivity(in);
@@ -721,23 +705,20 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
                                         dialog.cancel();
                                     }
                                 });
+
                         AlertDialog alert = builder.create();
                         alert.show();
                     } else {
                         UpdateData(storeCd);
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putString(CommonString.KEY_STORE_CD, storeCd);
-                        editor.putString(CommonString.KEY_STORE_IN_TIME, "");
                         editor.putString(CommonString.KEY_STOREVISITED, "");
                         editor.putString(CommonString.KEY_STOREVISITED_STATUS, "");
-                        editor.putString(CommonString.KEY_LATITUDE, "");
-                        editor.putString(CommonString.KEY_LONGITUDE, "");
                         editor.commit();
                         Intent in = new Intent(context, NonWorkingReason.class);
                         in.putExtra(CommonString.KEY_PJP_DEVIATION, flag_deviation);
                         startActivity(in);
                     }
-                    //finish();
                 }
             }
 
@@ -745,36 +726,15 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
 
         dialog.show();
     }
-
     public void UpdateData(String storeCd) {
-
         database.open();
         database.deleteSpecificStoreData(storeCd);
-        database.updateStoreStatusOnCheckout(storeCd, jcplist.get(0).getVISIT_DATE().get(0),
-                "N");
-    }
+        if (flag_deviation){
+            database.updateDeviationStoreStatusOnCheckout(storeCd, jcplist.get(0).getVISIT_DATE().get(0), "N");
+        }else {
+            database.updateStoreStatusOnCheckout(storeCd, jcplist.get(0).getVISIT_DATE().get(0), "N");
 
-
-    @Override
-    public void onLocationChanged(Location location) {
-        // TODO Auto-generated method stub
-        currLatitude = Double.toString(location.getLatitude());
-        currLongitude = Double.toString(location.getLongitude());
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
+        }
     }
 
     @Override
@@ -792,7 +752,6 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
         fab_button = (FloatingActionButton) findViewById(R.id.fab);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         date = preferences.getString(CommonString.KEY_DATE, null);
-        store_intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         username = preferences.getString(CommonString.KEY_USERNAME, null);
         user_type = preferences.getString(CommonString.KEY_USER_TYPE, null);
         context = this;
@@ -802,6 +761,7 @@ public class StoreListActivity extends AppCompatActivity implements LocationList
         database = new HimalayaDb(this);
         database.open();
     }
+
 
     public void setCheckOutData() {
         for (int i = 0; i < jcplist.size(); i++) {

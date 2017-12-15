@@ -5,6 +5,16 @@ public class CoverageBean
 	protected int MID;
 
 	protected String storeId;
+
+	public String getCoverage_query() {
+		return coverage_query;
+	}
+
+	public void setCoverage_query(String coverage_query) {
+		this.coverage_query = coverage_query;
+	}
+
+	protected String coverage_query;
 	protected String merchanId;
 	protected String dataSource;
 	protected String davId;

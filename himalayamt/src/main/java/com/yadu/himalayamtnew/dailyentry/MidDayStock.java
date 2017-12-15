@@ -54,11 +54,10 @@ public class MidDayStock extends AppCompatActivity implements View.OnClickListen
     ArrayList<StockNewGetterSetter> brandData;
     ArrayList<StockNewGetterSetter> skuData;
     HimalayaDb db;
-    String visit_date, username, intime;
+    String visit_date, username;
     boolean dataExists = false;
     boolean ischangedflag = false;
     Context context;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,14 +65,11 @@ public class MidDayStock extends AppCompatActivity implements View.OnClickListen
         prepareListData();
         listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
         expListView.setAdapter(listAdapter);
-
         btnSave.setOnClickListener(this);
-
         expListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
             }
-
             @Override
             public void onScrollStateChanged(AbsListView arg0, int arg1) {
                 expListView.clearFocus();
@@ -450,7 +446,6 @@ public class MidDayStock extends AppCompatActivity implements View.OnClickListen
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         username = preferences.getString(CommonString.KEY_USERNAME, null);
-        intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         setTitle("Midday Stock - " + visit_date);
         listDataHeader = new ArrayList<>();
         listDataChild = new HashMap<>();

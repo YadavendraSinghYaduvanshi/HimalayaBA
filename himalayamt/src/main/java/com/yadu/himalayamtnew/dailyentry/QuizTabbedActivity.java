@@ -66,7 +66,6 @@ public class QuizTabbedActivity extends AppCompatActivity implements QuizFragmen
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         setTitle("KRA - " + visit_date);
-
         db = new HimalayaDb(getApplicationContext());
         db.open();
         category_list = db.getCategoryQuestionData();
@@ -74,7 +73,6 @@ public class QuizTabbedActivity extends AppCompatActivity implements QuizFragmen
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
@@ -90,8 +88,8 @@ public class QuizTabbedActivity extends AppCompatActivity implements QuizFragmen
     }
 
     @Override
-    public void onListFragmentInteraction(ArrayList<Audit_QuestionDataGetterSetter> listDataHeader, String store_cd, String category_cd, int tab_position) {
-
+    public void onListFragmentInteraction(ArrayList<Audit_QuestionDataGetterSetter> listDataHeader,
+                                          String store_cd, String category_cd, int tab_position) {
         db.open();
         db.saveAuditQuestionAnswerData(listDataHeader, store_cd, category_cd);
         if ((tab_position + 1) < category_list.size()) {
@@ -134,11 +132,9 @@ public class QuizTabbedActivity extends AppCompatActivity implements QuizFragmen
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
-
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
-
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.

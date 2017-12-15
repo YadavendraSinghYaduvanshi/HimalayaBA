@@ -32,7 +32,6 @@ public class StoreEntry extends AppCompatActivity {
     HimalayaDb db;
     private SharedPreferences preferences;
     String store_cd, visit_date;
-    boolean food_flag;
     String user_type = "";
     ValueAdapter adapter;
     RecyclerView recyclerView;
@@ -49,10 +48,8 @@ public class StoreEntry extends AppCompatActivity {
         db.open();
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
-        food_flag = preferences.getBoolean(CommonString.KEY_FOOD_STORE, false);
         user_type = preferences.getString(CommonString.KEY_USER_TYPE, null);
         setTitle("Store Entry - " + visit_date);
 
@@ -83,8 +80,8 @@ public class StoreEntry extends AppCompatActivity {
 
         if (id == android.R.id.home) {
             // NavUtils.navigateUpFromSameTask(this);
-            finish();
             overridePendingTransition(R.anim.activity_back_in, R.anim.activity_back_out);
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -126,7 +123,6 @@ public class StoreEntry extends AppCompatActivity {
                     }
 
                     if (current.getIconImg() == R.drawable.midday_stock || current.getIconImg() == R.drawable.midday_stock_done) {
-
                         if (db.isClosingDataFilled(store_cd)) {
                             Snackbar.make(recyclerView, "Data cannot be changed", Snackbar.LENGTH_SHORT).show();
 
@@ -165,18 +161,6 @@ public class StoreEntry extends AppCompatActivity {
                         overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
                     }
 
-                  /*  if (current.getIconImg() == R.drawable.c_add_display || current.getIconImg() == R.drawable.c_add_display_done) {
-                        Intent in5 = new Intent(getApplicationContext(), AdditionalPOIActivity.class);
-                        startActivity(in5);
-                        overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
-                    }
-
-                    if (current.getIconImg() == R.drawable.competition || current.getIconImg() == R.drawable.competition_done) {
-                        Intent in7 = new Intent(getApplicationContext(), CompetionMenuActivity.class);
-                        startActivity(in7);
-                        overridePendingTransition(R.anim.activity_in, R.anim.activity_out);
-                    }
-*/
                     //Audit
                     if (current.getIconImg() == R.drawable.audit || current.getIconImg() == R.drawable.audit_done) {
                         Intent in7 = new Intent(getApplicationContext(), QuizTabbedActivity.class);
@@ -272,7 +256,6 @@ public class StoreEntry extends AppCompatActivity {
 
                 NavMenuItemGetterSetter recData = new NavMenuItemGetterSetter();
                 recData.setIconImg(img[i]);
-                //recData.setIconName(text[i]);
                 data.add(recData);
             }
         }

@@ -59,7 +59,7 @@ public class ClosingStock extends AppCompatActivity implements View.OnClickListe
     ArrayList<StockNewGetterSetter> skuData;
     HimalayaDb db;
     String store_cd;
-    String visit_date, username, intime;
+    String visit_date, username;
     boolean ischangedflag = false;
 
     @Override
@@ -508,7 +508,6 @@ public class ClosingStock extends AppCompatActivity implements View.OnClickListe
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         username = preferences.getString(CommonString.KEY_USERNAME, null);
-        intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         setTitle("Closing Stock - " + visit_date);
     }
 

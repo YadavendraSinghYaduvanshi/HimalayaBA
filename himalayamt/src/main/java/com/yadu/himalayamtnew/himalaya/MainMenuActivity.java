@@ -3,11 +3,13 @@ package com.yadu.himalayamtnew.himalaya;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -15,6 +17,7 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,7 +27,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.RequestBody;
 import com.yadu.himalayamtnew.R;
 import com.yadu.himalayamtnew.constants.AlertandMessages;
 import com.yadu.himalayamtnew.constants.CommonFunctions;
@@ -34,6 +42,8 @@ import com.yadu.himalayamtnew.database.HimalayaDb;
 import com.yadu.himalayamtnew.delegates.CoverageBean;
 import com.yadu.himalayamtnew.download.DownloadActivity;
 import com.yadu.himalayamtnew.fragment.MainFragment;
+import com.yadu.himalayamtnew.retrofit.PostApi;
+import com.yadu.himalayamtnew.retrofit.StringConverterFactory;
 import com.yadu.himalayamtnew.upload.CheckoutNUpload;
 import com.yadu.himalayamtnew.upload.UploadAllImageActivity;
 import com.yadu.himalayamtnew.upload.UploadDataActivity;
@@ -42,9 +52,15 @@ import com.yadu.himalayamtnew.xmlGetterSetter.JourneyPlanGetterSetter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 public class MainMenuActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -55,12 +71,18 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
     Context context;
     ArrayList<CoverageBean> cdata = new ArrayList<>();
     ArrayList<JourneyPlanGetterSetter> jcplist;
+    TextView tv_username, tv_usertype;
+    NavigationView navigationView;
+    String result = "";
+    boolean isvalid = false;
+    ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
         declaration();
+
     }
 
 
@@ -113,7 +135,7 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
 
             AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
             builder1.setTitle("Parinaam");
-            builder1.setMessage("Want to download data")
+            builder1.setMessage("Do you want to download data")
                     .setCancelable(false)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -134,6 +156,12 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
                                     AlertDialog alert = builder.create();
                                     alert.show();
                                 } else {
+                                    try {
+                                        database.open();
+                                        database.deletePreviousUploadedData(visit_date);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                     Intent startDownload = new Intent(getApplicationContext(), DownloadActivity.class);
                                     startActivity(startDownload);
                                 }
@@ -153,10 +181,9 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
             alert.show();
 
         } else if (id == R.id.nav_upload) {
-
             AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
             builder1.setTitle("Parinaam");
-            builder1.setMessage("Want to upload data")
+            builder1.setMessage("Do you want to upload data")
                     .setCancelable(false)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -172,19 +199,9 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
                                         if (cdata.size() == 0) {
                                             AlertandMessages.showSnackbarMsg(context, CommonString.MESSAGE_NO_DATA);
                                         } else {
-                                            if ((validate_data())) {
-                                                Intent i = new Intent(getBaseContext(), UploadDataActivity.class);
-                                                i.putExtra("UploadAll", false);
-                                                startActivity(i);
-                                                finish();
-                                            } else if (validate()) {
-                                                Intent i = new Intent(getBaseContext(), UploadAllImageActivity.class);
-                                                //i.putExtra("UploadAll", false);
-                                                startActivity(i);
-                                                finish();
-                                            } else {
-                                                AlertandMessages.showSnackbarMsg(context, CommonString.MESSAGE_NO_DATA);
-                                            }
+                                            uploadBackupUsingRetro();
+
+
                                         }
                                     }
                                 } else {
@@ -211,11 +228,10 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
 
             AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
             builder1.setTitle("Parinaam");
-            builder1.setMessage("Want to exit app")
+            builder1.setMessage("Do you want to exit app")
                     .setCancelable(false)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-
                             Intent startDownload = new Intent(getApplicationContext(), LoginActivity.class);
                             startActivity(startDownload);
                             finish();
@@ -235,65 +251,7 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
 
         } else if (id == R.id.nav_export_database) {
             showExportDialog();
-           /* AlertDialog.Builder builder1 = new AlertDialog.Builder(MainMenuActivity.this);
-
-            builder1.setMessage("Are you sure you want to take the backup of your data")
-                    .setCancelable(false)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @SuppressWarnings("resource")
-                        public void onClick(DialogInterface dialog, int id) {
-
-                            try {
-                                File file = new File(Environment.getExternalStorageDirectory(), "Himalaya_MT_backup");
-                                if (!file.isDirectory()) {
-                                    file.mkdir();
-                                }
-
-                                File sd = Environment.getExternalStorageDirectory();
-                                File data = Environment.getDataDirectory();
-
-                                if (sd.canWrite()) {
-                                    long date = System.currentTimeMillis();
-
-                                    SimpleDateFormat sdf = new SimpleDateFormat("MMM/dd/yy");
-                                    String dateString = sdf.format(date);
-
-                                    String currentDBPath = "//data//com.yadu.himalayamt//databases//" + HimalayaDb.DATABASE_NAME;
-                                    String backupDBPath = "Himalaya_MT_backup" + dateString.replace('/', '_') + ".db";
-
-                                    String path = Environment.getExternalStorageDirectory().getPath() + "/Himalaya_MT_backup";
-
-                                    File currentDB = new File(data, currentDBPath);
-                                    File backupDB = new File(path, backupDBPath);
-
-                                    AlertandMessages.showSnackbarMsg(context, "Database Exported Successfully");
-
-                                    if (currentDB.exists()) {
-                                        @SuppressWarnings("resource")
-                                        FileChannel src = new FileInputStream(currentDB).getChannel();
-                                        FileChannel dst = new FileOutputStream(backupDB).getChannel();
-                                        dst.transferFrom(src, 0, src.size());
-                                        src.close();
-                                        dst.close();
-                                    }
-                                }
-                            } catch (Exception e) {
-                                System.out.println(e.getMessage());
-                            }
-
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                        }
-                    });
-
-            AlertDialog alert1 = builder1.create();
-            alert1.show();*/
-
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -304,10 +262,7 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
         super.onResume();
         FragmentManager fragmentManager = getSupportFragmentManager();
         MainFragment cartfrag = new MainFragment();
-        fragmentManager.beginTransaction()
-                .replace(R.id.frame_layout, cartfrag)
-                .commit();
-
+        fragmentManager.beginTransaction().replace(R.id.frame_layout, cartfrag).commit();
     }
 
     public boolean isStoreInvalid(ArrayList<CoverageBean> coverage) {
@@ -332,32 +287,14 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
                 storestatus = database.getStoreStatus(cdata.get(i).getStoreId());
             }
             if (!storestatus.getUploadStatus().get(0).equalsIgnoreCase(CommonString.KEY_U)) {
-                if ((storestatus.getCheckOutStatus().get(0).equalsIgnoreCase(CommonString.KEY_C)
-                        || storestatus.getUploadStatus().get(0).equalsIgnoreCase(
-                        CommonString.KEY_P) || cdata.get(i).getStatus()
-                        .equalsIgnoreCase(CommonString.STORE_STATUS_LEAVE))) {
+                if (storestatus.getCheckOutStatus().get(0).equalsIgnoreCase(CommonString.KEY_C)
+                        || storestatus.getUploadStatus().get(0).equalsIgnoreCase(CommonString.KEY_P) ||
+                        storestatus.getUploadStatus().get(0).equalsIgnoreCase(CommonString.KEY_D) ||
+                        cdata.get(i).getStatus().equalsIgnoreCase(CommonString.STORE_STATUS_LEAVE)) {
                     result = true;
                     break;
 
                 }
-            }
-        }
-
-        return result;
-    }
-
-    public boolean validate() {
-        boolean result = false;
-
-        database.open();
-        cdata = database.getCoverageData(date);
-
-        for (int i = 0; i < cdata.size(); i++) {
-
-            if (cdata.get(i).getStatus().equalsIgnoreCase(CommonString.KEY_D)) {
-                result = true;
-                break;
-
             }
         }
 
@@ -388,13 +325,14 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
                                 String dateString = sdf.format(date);
 
                                 String currentDBPath = "//data//com.yadu.himalayamt//databases//" + HimalayaDb.DATABASE_NAME;
-                                String backupDBPath = "Himalaya_MT_backup" + user_name.replace(".", "") + "_backup" + dateString.replace('/', '_') + CommonFunctions.getCurrentTime().replace(":", "") + ".db";
+                                String backupDBPath = "Himalaya_MT_backup" + user_name.replace(".", "")
+                                        + "_backup" + dateString.replace('/', '_') +
+                                        CommonFunctions.getCurrentTime().replace(":", "") + ".db";
 
                                 String path = Environment.getExternalStorageDirectory().getPath() + "/Himalaya_MT_backup";
 
                                 File currentDB = new File(data, currentDBPath);
                                 File backupDB = new File(path, backupDBPath);
-                                AlertandMessages.showSnackbarMsg(context, "Database Exported Successfully");
 
                                 if (currentDB.exists()) {
                                     @SuppressWarnings("resource")
@@ -406,6 +344,25 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
                                 }
                                 dialog.dismiss();
                             }
+
+                            File dir = new File(CommonString.BACKUP_PATH);
+                            ArrayList<String> list = new ArrayList();
+                            list = getFileNames(dir.listFiles());
+
+                            if (list.size() > 0) {
+                                for (int i1 = 0; i1 < list.size(); i1++) {
+                                    if (list.get(i1).contains("Himalaya_MT_backup")) {
+                                        File originalFile = new File(CommonString.BACKUP_PATH + list.get(i1));
+                                        Object result = uploadBackup(MainMenuActivity.this, originalFile.getName(),
+                                                "DB_Backup");
+                                        if (!result.toString().equalsIgnoreCase(CommonString.KEY_SUCCESS)) {
+
+                                        }
+                                    }
+                                }
+                            }
+
+                            Snackbar.make(navigationView, "Database Exported And Uploaded Successfully", Snackbar.LENGTH_SHORT).show();
                         } catch (Exception e) {
                             dialog.dismiss();
                             e.printStackTrace();
@@ -423,23 +380,189 @@ public class MainMenuActivity extends AppCompatActivity implements NavigationVie
     }
 
 
+    public ArrayList<String> getFileNames(File[] file) {
+        ArrayList<String> arrayFiles = new ArrayList<String>();
+        if (file.length > 0) {
+            for (int i = 0; i < file.length; i++)
+                arrayFiles.add(file[i].getName());
+        }
+        return arrayFiles;
+    }
+
+
+    private String uploadBackup(final Context context, String file_name, String folder_name) {
+        RequestBody body1;
+        result = "";
+        isvalid = false;
+        final File originalFile = new File(CommonString.BACKUP_PATH + file_name);
+        RequestBody photo = RequestBody.create(MediaType.parse("application/octet-stream"), originalFile);
+        body1 = new MultipartBuilder().type(MultipartBuilder.FORM)
+                .addFormDataPart("file", originalFile.getName(), photo)
+                .addFormDataPart("FolderName", folder_name)
+                .build();
+        Retrofit adapter = new Retrofit.Builder()
+                .baseUrl(CommonString.URL + "/")
+                .addConverterFactory(new StringConverterFactory())
+                .build();
+        PostApi api = adapter.create(PostApi.class);
+        Call<String> call = api.getUploadImage(body1);
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(Response<String> response) {
+                if (response.toString() != null) {
+                    if (response.body().contains(CommonString.KEY_SUCCESS)) {
+                        isvalid = true;
+                        result = CommonString.KEY_SUCCESS;
+                        originalFile.delete();
+                    } else {
+                        result = "Servererror!";
+                    }
+                } else {
+                    result = "Servererror!";
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                isvalid = true;
+                if (t instanceof UnknownHostException) {
+                    result = AlertandMessages.MESSAGE_SOCKETEXCEPTION;
+                } else {
+                    result = AlertandMessages.MESSAGE_SOCKETEXCEPTION;
+                }
+                Toast.makeText(context, originalFile.getName() + " not uploaded", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        return result;
+    }
+
+
     void declaration() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         context = this;
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         user_name = preferences.getString(CommonString.KEY_USERNAME, null);
         user_type = preferences.getString(CommonString.KEY_USER_TYPE, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
         date = preferences.getString(CommonString.KEY_DATE, null);
         getSupportActionBar().setTitle("Main Menu - " + visit_date);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer,
+                toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View headerView = LayoutInflater.from(this).inflate(R.layout.nav_header_main_menu,
+                navigationView, false);
+        navigationView.addHeaderView(headerView);
+        tv_username = (TextView) headerView.findViewById(R.id.nav_user_name);
+        tv_usertype = (TextView) headerView.findViewById(R.id.nav_user_type);
+        tv_username.setText(user_name);
+        tv_usertype.setText(user_type);
+        navigationView.setNavigationItemSelectedListener(this);
         database = new HimalayaDb(this);
         database.open();
+        database.isCoverageDataFilled(date);
+    }
+
+    private void uploadBackupUsingRetro() {
+        try {
+            RequestBody body1;
+            pd = ProgressDialog.show(this, "", "Uploading Backup . Please wait......", true);
+            File file = new File(Environment.getExternalStorageDirectory(), "Himalaya_MT_backup");
+            if (!file.isDirectory()) {
+                file.mkdir();
+            }
+            File sd = Environment.getExternalStorageDirectory();
+            File data = Environment.getDataDirectory();
+            if (sd.canWrite()) {
+                long date = System.currentTimeMillis();
+
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM/dd/yy");
+                String dateString = sdf.format(date);
+                String currentDBPath = "//data//com.yadu.himalayamt//databases//" + HimalayaDb.DATABASE_NAME;
+                String backupDBPath = "Himalaya_MT_backup" + user_name.replace(".", "")
+                        + "_backup" + dateString.replace('/', '_') +
+                        CommonFunctions.getCurrentTime().replace(":", "") + ".db";
+
+                String path = Environment.getExternalStorageDirectory().getPath() + "/Himalaya_MT_backup";
+
+                File currentDB = new File(data, currentDBPath);
+                File backupDB = new File(path, backupDBPath);
+
+                if (currentDB.exists()) {
+                    @SuppressWarnings("resource")
+                    FileChannel src = new FileInputStream(currentDB).getChannel();
+                    FileChannel dst = new FileOutputStream(backupDB).getChannel();
+                    dst.transferFrom(src, 0, src.size());
+                    src.close();
+                    dst.close();
+                }
+            }
+            File dir = new File(CommonString.BACKUP_PATH);
+            ArrayList<String> list = new ArrayList();
+            list = getFileNames(dir.listFiles());
+            if (list.size() > 0) {
+                result = "";
+                if (list.get(0).contains("Himalaya_MT_backup")) {
+                    if (new File(CommonString.BACKUP_PATH + list.get(0)).exists()) {
+                        final File originalFile = new File(CommonString.BACKUP_PATH + list.get(0));
+                        RequestBody photo = RequestBody.create(MediaType.parse("application/octet-stream"), originalFile);
+                        body1 = new MultipartBuilder().type(MultipartBuilder.FORM)
+                                .addFormDataPart("file", originalFile.getName(), photo)
+                                .addFormDataPart("FolderName", "DB_Backup")
+                                .build();
+                        Retrofit adapter = new Retrofit.Builder()
+                                .baseUrl(CommonString.URL + "/")
+                                .addConverterFactory(new StringConverterFactory())
+                                .build();
+                        PostApi api = adapter.create(PostApi.class);
+                        Call<String> call = api.getUploadImage(body1);
+                        call.enqueue(new Callback<String>() {
+                            @Override
+                            public void onResponse(Response<String> response) {
+                                if (response.toString() != null) {
+                                    if (response.body().contains(CommonString.KEY_SUCCESS)) {
+                                        pd.dismiss();
+                                        originalFile.delete();
+                                        if ((validate_data())) {
+                                            Intent i = new Intent(getBaseContext(), UploadDataActivity.class);
+                                            i.putExtra("UploadAll", false);
+                                            startActivity(i);
+                                            finish();
+                                        } else {
+                                            AlertandMessages.showSnackbarMsg(context, CommonString.MESSAGE_NO_DATA);
+                                        }
+                                    } else {
+                                        AlertandMessages.showSnackbarMsg(context, "ServerError .Please try again");
+
+                                    }
+                                } else {
+                                    AlertandMessages.showSnackbarMsg(context, "ServerError .Please try again");
+
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                pd.dismiss();
+                                if (t instanceof UnknownHostException) {
+                                    AlertandMessages.showSnackbarMsg(context, CommonString.MESSAGE_SOCKETEXCEPTION);
+                                } else {
+                                    AlertandMessages.showSnackbarMsg(context, CommonString.MESSAGE_SOCKETEXCEPTION);
+
+                                }
+                                Toast.makeText(context, originalFile.getName() + " not uploaded", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

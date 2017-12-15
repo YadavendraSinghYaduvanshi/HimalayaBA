@@ -10,7 +10,14 @@ public class StockNewGetterSetter {
             ed_openingStock, ed_openingFacing, ed_midFacing, ed_closingFacing, asset_cd,
             chk_skuBox, stock_under45days,company_cd, himalaya_camera, category_camera;
 
+    String stock_query;
+    public String getStock_query() {
+        return stock_query;
+    }
 
+    public void setStock_query(String stock_query) {
+        this.stock_query = stock_query;
+    }
     public String getOpenning_total_stock() {
         return openning_total_stock;
     }

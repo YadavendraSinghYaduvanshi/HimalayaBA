@@ -6,6 +6,7 @@ import com.yadu.himalayamtnew.xmlGetterSetter.Audit_QuestionGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.BrandGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.CategoryMasterGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.CompanyGetterSetter;
+import com.yadu.himalayamtnew.xmlGetterSetter.DataCheckedGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.FailureGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.JourneyPlanGetterSetter;
 import com.yadu.himalayamtnew.xmlGetterSetter.MappingAssetChecklistGetterSetter;
@@ -94,6 +95,35 @@ public class XMLHandlers {
             e.printStackTrace();
         }
         return lgs;
+    }
+
+
+
+
+    public static DataCheckedGetterSetter UploadedDataCheckedXMLHandler(XmlPullParser xpp,
+                                                            int eventType) {
+        DataCheckedGetterSetter failureGetterSetter = new DataCheckedGetterSetter();
+
+        try {
+            while (xpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+                if (xpp.getEventType() == XmlPullParser.START_TAG) {
+                    if (xpp.getName().equals("META_DATA")) {
+                        failureGetterSetter.setTable(xpp.nextText());
+                    }
+                    if (xpp.getName().equals("DATA_REACHED")) {
+                        failureGetterSetter.setData_checked(xpp.nextText());
+                    }
+                }
+                xpp.next();
+            }
+        } catch (XmlPullParserException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return failureGetterSetter;
     }
 
     // JCP XML HANDLER
@@ -421,7 +451,6 @@ public class XMLHandlers {
                     if (xpp.getName().equals("IMAGE_URL")) {
                         mappingasset.setIMAGE_URL(xpp.nextText());
                     }
-
                 }
                 xpp.next();
             }

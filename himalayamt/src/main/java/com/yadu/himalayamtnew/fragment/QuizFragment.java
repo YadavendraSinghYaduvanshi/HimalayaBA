@@ -35,32 +35,28 @@ import java.util.List;
  * interface.
  */
 public class QuizFragment extends Fragment {
-
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
     // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
-
     ArrayList<Audit_QuestionDataGetterSetter> headerListData;
     ArrayList<Audit_QuestionDataGetterSetter> childListData;
     ArrayList<Audit_QuestionDataGetterSetter> listDataHeader;
     HashMap<Audit_QuestionDataGetterSetter, ArrayList<Audit_QuestionDataGetterSetter>> listDataChild;
     HimalayaDb db;
-
     String visit_date, username, intime, str, category_id="1";
     int tab_position;
     private SharedPreferences preferences;
     String store_cd;
-
     RecyclerView recyclerView;
     Button btn;
     AnswerAdapter adapter;
     boolean checkflag = true;
-
     List<Integer> checkHeaderArray = new ArrayList<>();
     public QuizFragment() {
     }
+
 
     // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
@@ -92,7 +88,6 @@ public class QuizFragment extends Fragment {
         str = CommonString.FILE_PATH;
         db = new HimalayaDb(getActivity());
         db.open();
-
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         store_cd = preferences.getString(CommonString.KEY_STORE_CD, null);
         visit_date = preferences.getString(CommonString.KEY_DATE, null);
@@ -100,7 +95,6 @@ public class QuizFragment extends Fragment {
         intime = preferences.getString(CommonString.KEY_STORE_IN_TIME, "");
         recyclerView = (RecyclerView) view.findViewById(R.id.list);
         btn = (Button) view.findViewById(R.id.btn_save);
-
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -140,7 +134,6 @@ public class QuizFragment extends Fragment {
     private void prepareListData() {
         listDataHeader = new ArrayList<>();
         listDataChild = new HashMap<>();
-
         headerListData = db.getAfterSaveAuditQuestionAnswerData(store_cd, category_id);
         if (!(headerListData.size() > 0)) {
             headerListData = db.getAuditQuestionData(category_id);
